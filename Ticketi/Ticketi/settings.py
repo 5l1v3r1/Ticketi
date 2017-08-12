@@ -75,12 +75,32 @@ WSGI_APPLICATION = 'Ticketi.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
+
+## RUN THIS TO CREATE POSTGRESSQL TABLE:
+# CREATE DATABASE ticketi;
+# CREATE USER ticketiuser WITH PASSWORD 'password';
+# ALTER ROLE ticketiuser SET client_encoding TO 'utf8';
+# GRANT ALL PRIVILEGES ON DATABASE ticketi TO ticketiuser;
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'ticketi',
+        'USER': 'ticketiuser',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '',
+    }
+}
+
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'mydatabase',
     }
 }
+"""
 
 
 # Password validation
