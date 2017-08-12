@@ -9,7 +9,7 @@ import datetime
 class Ticket (models.Model):
     title = models.CharField(max_length = 500)
     body = models.TextField()
-    summary_len = models.IntegerField()  #TODO : ye fkri b halesh bokonim -__-
+    summary_len = models.IntegerField(default=0)  #TODO : ye fkri b halesh bokonim -__-
     ticket_type = models.ForeignKey('Type')
 
     LOW = 'LOW'
@@ -22,19 +22,19 @@ class Ticket (models.Model):
     )
 
     priority = models.CharField(choices = PRIORITY_CHOICES, default=NORMAL, max_length=15)
-    known_approvers = models.ManyToManyField(User, related_name='ticket_M2M_known_approvers')
-    unknown_approvers = models.ManyToManyField(User, related_name='ticket_M2M_unknown_approvers')
-    known_denials = models.ManyToManyField(User, related_name='ticket_M2M_known_denials')
-    unknown_denials = models.ManyToManyField(User, related_name='ticket_M2M_unknown_denials')
-    adressed_users = models.ManyToManyField(User, related_name='ticket_M2M_adressed_users')
-    cc_users = models.ManyToManyField(User, related_name='ticket_M2M_cc_users')
+    known_approvers = models.ManyToManyField(User, related_name='ticket_M2M_known_approvers', blank=True)
+    unknown_approvers = models.ManyToManyField(User, related_name='ticket_M2M_unknown_approvers', blank=True)
+    known_denials = models.ManyToManyField(User, related_name='ticket_M2M_known_denials', blank=True)
+    unknown_denials = models.ManyToManyField(User, related_name='ticket_M2M_unknown_denials', blank=True)
+    adressed_users = models.ManyToManyField(User, related_name='ticket_M2M_adressed_users') #TODO: mitone khali bashe?
+    cc_users = models.ManyToManyField(User, related_name='ticket_M2M_cc_users', blank=True)
 
-    in_list_contributers = models.ManyToManyField(User, related_name='ticket_M2M_in_list_contributers')
     contributers = models.ManyToManyField(User, related_name='ticket_M2M_contributers')
+    in_list_contributers = models.ManyToManyField(User, related_name='ticket_M2M_in_list_contributers', blank=True)
 
-    is_public = models.BooleanField()
-    being_unknown = models.BooleanField()
-    tag_list = models.ManyToManyField('Tag')
+    is_public = models.BooleanField(default=True)
+    being_unknown = models.BooleanField(default=False)
+    tag_list = models.ManyToManyField('Tag', blank=True)
     creation_time = models.DateField(auto_now_add=True)
 
     PENDING = 'PENDING'
@@ -50,10 +50,10 @@ class Ticket (models.Model):
 
     status = models.CharField(choices = STATUS_CHOICES, default=PENDING, max_length=15)
 
-    need_to_confirmed = models.BooleanField()
+    need_to_confirmed = models.BooleanField(default=False)
     minimum_approvers_count = models.IntegerField(default = 0)
 
-    parent = models.ForeignKey('Ticket')
+    parent = models.ForeignKey('Ticket', null=True)
 
 class PrivateTicket (models.Model):
     body = models.TextField()
@@ -63,6 +63,9 @@ class PrivateTicket (models.Model):
 class Type (models.Model):
     title = models.CharField(max_length = 300)
     department = models.ManyToManyField('Department')
+
+    def __str__(self):
+        return self.title
 
 class Tag (models.Model):
     title = models.CharField(max_length = 100)
