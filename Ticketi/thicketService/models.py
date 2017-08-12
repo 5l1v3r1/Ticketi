@@ -10,88 +10,94 @@ class Ticket (models.Model):
     title = models.CharField(max_length = 500)
     body = models.TextField()
     summary_len = models.IntegerField()  #TODO : ye fkri b halesh bokonim -__-
-    type_ = models.ForeignKey(Type)
+    ticket_type = models.ForeignKey('Type')
 
+    LOW = 'LOW'
+    NORMAL = 'NORMAL'
+    IMPORTANT = 'IMPORTANT'
     PRIORITY_CHOICES = (
-        (1, "Low"),
-        (2, "Normal"),
-        (3, "Important"),
+        (LOW, "Low"),
+        (NORMAL, "Normal"),
+        (IMPORTANT, "Important"),
     )
 
-    priority = ChoiceField(CHOICES = PRIORITY_CHOICES)
+    priority = models.CharField(choices = PRIORITY_CHOICES, default=NORMAL, max_length=15)
+    known_approvers = models.ManyToManyField(User, related_name='ticket_M2M_known_approvers')
+    unknown_approvers = models.ManyToManyField(User, related_name='ticket_M2M_unknown_approvers')
+    known_denials = models.ManyToManyField(User, related_name='ticket_M2M_known_denials')
+    unknown_denials = models.ManyToManyField(User, related_name='ticket_M2M_unknown_denials')
+    adressed_users = models.ManyToManyField(User, related_name='ticket_M2M_adressed_users')
+    cc_users = models.ManyToManyField(User, related_name='ticket_M2M_cc_users')
 
-    known_approvers = models.ManyToManyField(User)
-    unknown_approvers = models.ManyToManyField(User)
-    known_denials = models.ManyToManyField(User)
-    unknown_denials = models.ManyToManyField(User)
-    adressed_users = models.ManyToManyField(User)
-    cc_users = models.ManyToManyField(User)
-
-    in_list_contributers = models.ManyToManyField(User)
-    contributers = models.ManyToManyField(User)
+    in_list_contributers = models.ManyToManyField(User, related_name='ticket_M2M_in_list_contributers')
+    contributers = models.ManyToManyField(User, related_name='ticket_M2M_contributers')
 
     is_public = models.BooleanField()
     being_unknown = models.BooleanField()
-    tag_list = models.ManyToManyField(Tag)
-    creation_time = DateField(default = datetime.now())
+    tag_list = models.ManyToManyField('Tag')
+    creation_time = models.DateField(auto_now_add=True)
 
+    PENDING = 'PENDING'
+    PROGRESSING = 'PROGRESSING'
+    SOLVED = 'SOLVED'
+    CLOSED = 'CLOSED'
     STATUS_CHOICES = (
-        (1, "Pending"),
-        (2, "Progressing"),
-        (3, "Solved"),
-        (4, "Closed"),
+        (PENDING, "Pending"),
+        (PROGRESSING, "Progressing"),
+        (SOLVED, "Solved"),
+        (CLOSED, "Closed"),
     )
 
-    status = ChoiceField(CHOICES = STATUS_CHOICES)
+    status = models.CharField(choices = STATUS_CHOICES, default=PENDING, max_length=15)
 
     need_to_confirmed = models.BooleanField()
     minimum_approvers_count = models.IntegerField(default = 0)
 
-    parent = models.ForeignKey(Ticket)
+    parent = models.ForeignKey('Ticket')
 
 class PrivateTicket (models.Model):
     body = models.TextField()
     adressed_users = models.ManyToManyField(User)
-    parent_ticket = models.ForeignKey(Ticket)
+    parent_ticket = models.ForeignKey('Ticket')
 
 class Type (models.Model):
     title = models.CharField(max_length = 300)
-    department = models.ManyToManyField(Department)
+    department = models.ManyToManyField('Department')
 
 class Tag (models.Model):
     title = models.CharField(max_length = 100)
 
 class Department (models.Model):
-    title = models.CharField()
-    parent = models.ForeignKey(Department)
-    level = IntegerField()
+    title = models.CharField(max_length=100)
+    parent = models.ForeignKey('Department')
+    level = models.IntegerField()
 
 class Attachments (models.Model):
-    path = models.CharField()
+    path = models.CharField(max_length=500)
 
 class PublicAttachments (Attachments):
-    ticket = models.ForeignKey(Ticket)
+    ticket = models.ForeignKey('Ticket')
 
 class PrivateAttachments (Attachments):
-    ticket = models.ForeignKey(PrivateTicket)
+    ticket = models.ForeignKey('PrivateTicket')
 
 class Comments (models.Model):
     user = models.ForeignKey(User)
-    ticket = models.ForeignKey(Ticket)
-    creation_time = models.DateField(default = datetime.now())
-    parent = models.ForeignKey(Comments)
+    ticket = models.ForeignKey('Ticket')
+    creation_time = models.DateField(auto_now_add=True)
+    parent = models.ForeignKey('Comments')
     being_unknown = models.BooleanField()
     verified = models.BooleanField(default = False)
 
 class Like (models.Model):
-    comments = models.ForeignKey(Comments)
+    comments = models.ForeignKey('Comments')
     user = models.ForeignKey(User)
-    time = models.DateField(default = datetime.now())
+    time = models.DateField(auto_now_add=True)
 
-class Activities (model.Model):
-    ticket = models.ForeignKey(Ticket)
+class Activities (models.Model):
+    ticket = models.ForeignKey('Ticket')
     user = models.ForeignKey(User)
-    time = models.DateField(default = datetime.now())
+    time = models.DateField(auto_now_add=True)
 
 class Referral (Activities):
     reffered_to = models.ManyToManyField(User)
@@ -102,10 +108,10 @@ class SetConfirmationLimit (Activities):
 
 class edit (Activities):
     new_body = models.TextField()
-    new_title = models.CharField()
+    new_title = models.CharField(max_length=500)
 
 class ChangeStatus (Activities):
-    status = ChoiceField(Ticket.STATUS_CHOICES)
+    status = models.CharField(choices = Ticket.STATUS_CHOICES, max_length=15)
 
 class Reopen (Activities):
-    new_ticket = models.ForeignKey(Ticket)
+    new_ticket = models.ForeignKey('Ticket')
