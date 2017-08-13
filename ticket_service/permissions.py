@@ -8,5 +8,4 @@ class IsOwnerOrReadOnly(BasePermission):
         return False
 
     def has_object_permission(self, request, view, ticket):
-        return request.user in ticket.contributers
-        
+        return request.user in ticket.contributers.all()
