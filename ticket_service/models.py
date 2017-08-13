@@ -2,15 +2,20 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group, Permissoin
 import datetime
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete = CASCADE)
+    post = models.CharField(max_length = 100)
+    profile_picture_path = models.CharField(max_length = 500)
 
 
 class Ticket (models.Model):
     title = models.CharField(max_length = 500)
     body = models.TextField()
     summary_len = models.IntegerField(default=0)  #TODO : ye fkri b halesh bokonim -__-
-    ticket_type = models.ForeignKey('Type')
+    ticket_type = models.ForeignKey('Type', blank = True, null = True) #TODO: nabayad beshe blank gozasht, movaqat intori shod
 
     LOW = 'LOW'
     NORMAL = 'NORMAL'
@@ -48,12 +53,12 @@ class Ticket (models.Model):
         (CLOSED, "Closed"),
     )
 
-    status = models.CharField(choices = STATUS_CHOICES, default=PENDING, max_length=15)
+    status = models.CharField(choices = STATUS_CHOICES, default = PENDING, max_length = 15)
 
-    need_to_confirmed = models.BooleanField(default=False)
+    need_to_confirmed = models.BooleanField(default = False)
     minimum_approvers_count = models.IntegerField(default = 0)
 
-    parent = models.ForeignKey('Ticket', null=True)
+    parent = models.ForeignKey('Ticket', null = True, blank = True)
 
 class PrivateTicket (models.Model):
     body = models.TextField()
@@ -85,11 +90,12 @@ class PrivateAttachments (Attachments):
     ticket = models.ForeignKey('PrivateTicket')
 
 class Comments (models.Model):
+    body = models.TextField()
     user = models.ForeignKey(User)
     ticket = models.ForeignKey('Ticket')
     creation_time = models.DateField(auto_now_add=True)
-    parent = models.ForeignKey('Comments')
-    being_unknown = models.BooleanField()
+    parent = models.ForeignKey('Comments', default = None)
+    being_unknown = models.BooleanField(default = False)
     verified = models.BooleanField(default = False)
 
 class Like (models.Model):
