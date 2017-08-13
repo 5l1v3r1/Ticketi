@@ -36,11 +36,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'title',
             'body', # write_only
             'summary_len', # write_only
-<<<<<<< HEAD
             'in_list_contributers', # write_only
-=======
-            'in_list_contributers',
->>>>>>> 4e761adafa18f4787c42f3e995cd9db730b43ec6
             'summary',
             'ticket_type',
             'priority',
