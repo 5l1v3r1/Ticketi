@@ -159,9 +159,9 @@ class BaseAttachmentSerializer(serializers.ModelSerializer):
 class PublicAttachmentSerializer(BaseAttachmentSerializer):
     class Meta(BaseAttachmentSerializer.Meta):
         model = PublicAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket')
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
 
 class PrivateAttachmentSerializer(BaseAttachmentSerializer):
     class Meta(BaseAttachmentSerializer.Meta):
         model = PrivateAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket')
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
