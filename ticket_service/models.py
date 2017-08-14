@@ -92,8 +92,19 @@ class Ticket (models.Model):
         return self.known_denials.count() + self.unknown_denials.count()
 
     @property
-    def get_activities(self):
-        return self._meta.get_all_related_objects()
+    def get_comments(self):
+        return self.comment_set.all()
+
+    # @priority
+    # def get_activities(self):
+    #     return self.known_denials.count() + self.unknown_denials.count()
+    #     # return {
+    #     #     'ChangeStatus': self.ticket_service_changestatus_related,
+    #     #     'EditTicket': self.ticket_service_editticket_related,
+    #     #     'Referral': self.ticket_service_referral_related.count(),
+    #     #     'Reopen': self.ticket_service_reopen_related,
+    #     #     'SetConfirmationLimit': self.Ticket_service_setconfirmationlimit_related
+    #     # }
 
     def __str__(self):
         return self.title
@@ -153,11 +164,11 @@ class Like (models.Model):
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
 
-class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #TODO: Base bezaarim tahesh!
-    ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_activity_ticket_related",
-                                related_query_name="%(app_label)s_%(class)s_activity_ticket_relateds",)
-    user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_activity_user_related",
-                                related_query_name="%(app_label)s_%(class)s_activity_user_relateds",)
+class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #Done: Base bezaarim tahesh!
+    ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_related",
+                                related_query_name="%(app_label)s_%(class)s_relateds",)
+    user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_related",
+                                related_query_name="%(app_label)s_%(class)s_relateds",)
     time = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -170,7 +181,7 @@ class SetConfirmationLimit (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class edit (BaseActivity):
+class EditTicket (BaseActivity):
     new_body = models.TextField()
     new_title = models.CharField(max_length=500)
 

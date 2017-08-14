@@ -1,12 +1,9 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, BaseActivity
+from models import Ticket, Type, Tag, Comment
 from django.contrib.auth.models import User
+from ticket_service.activity_serializer import ReferralSerializer
 import datetime
 
-class ActivitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BaseActivity
-        fields = ('id', )
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -113,8 +110,8 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
     tag_list = TagSerializer(many=True, read_only=True)
-    Comment = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
-    Activity = ActivitySerializer(many=True, source='get_activities')
+    comments = CommentSerializer(many=True, read_only=True, source='get_comments') #TODO: test comment
+    # activities = ReferralSerializer(source='ticket_service_referral_related')
 
     class Meta:
         model = Ticket
@@ -129,7 +126,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'known_denials',
             'approvers_count',
             'denials_count',
-            'Comment',
+            'comments',
             'addressed_users',
             'cc_users',
             'contributers',
@@ -141,5 +138,5 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'need_to_confirmed',
             'minimum_approvers_count',
             'parent',
-            'Activity'
+            # 'activities'
         )
