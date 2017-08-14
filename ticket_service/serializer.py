@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, Activity
+from models import Ticket, Type, Tag, Comment, BaseActivity
 from django.contrib.auth.models import User
 import datetime
 
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Activities
+        model = BaseActivity
         fields = ('id', )
 
 class TagSerializer(serializers.ModelSerializer):
@@ -98,12 +98,12 @@ class TicketSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_count')
     class Meta:
-        model = Comments
+        model = Comment
         fields = (
-            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
-        )
+            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',)
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
+
     known_approvers = UserSerializer(many=True, read_only=True)
     known_denials = UserSerializer(many=True, read_only=True)
     ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
@@ -113,13 +113,8 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
     tag_list = TagSerializer(many=True, read_only=True)
-<<<<<<< HEAD
-    comments = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
-    activities = ActivitySerializer(many=True, source='activities_set')
-=======
     Comment = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
     Activity = ActivitySerializer(many=True, source='get_activities')
->>>>>>> 4b8d0137d68afd2f5360dafa8abe9332fde7cd73
 
     class Meta:
         model = Ticket
@@ -134,7 +129,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'known_denials',
             'approvers_count',
             'denials_count',
-            'comments',
+            'Comment',
             'addressed_users',
             'cc_users',
             'contributers',
@@ -146,5 +141,5 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'need_to_confirmed',
             'minimum_approvers_count',
             'parent',
-            'activities'
+            'Activity'
         )
