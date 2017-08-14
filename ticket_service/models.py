@@ -43,7 +43,7 @@ class Ticket (models.Model):
     unknown_approvers = models.ManyToManyField(User, related_name='ticket_M2M_unknown_approvers', blank=True)
     known_denials = models.ManyToManyField(User, related_name='ticket_M2M_known_denials', blank=True)
     unknown_denials = models.ManyToManyField(User, related_name='ticket_M2M_unknown_denials', blank=True)
-    addressed_users = models.ManyToManyField(User, related_name='ticket_M2M_addressed_users') #TODO: mitone khali bashe?
+    addressed_users = models.ManyToManyField(User, related_name='addressed_users') #TODO: mitone khali bashe?
     cc_users = models.ManyToManyField(User, related_name='ticket_M2M_cc_users', blank=True)
 
     contributers = models.ManyToManyField(User, related_name='ticket_M2M_contributers')
@@ -157,7 +157,7 @@ class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete s
 
     @property
     def likes_count(self):
-        return self.Like_set.count()
+        return self.like_set.count()
 
 class Like (models.Model):
     Comment = models.ForeignKey('Comment')

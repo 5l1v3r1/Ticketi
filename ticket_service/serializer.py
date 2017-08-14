@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment
+from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
 from django.contrib.auth.models import User
 from ticket_service.activity_serializer import ReferralSerializer
 import datetime
@@ -94,10 +94,13 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_count')
+    user = UserSerializer(read_only = True)
     class Meta:
         model = Comment
         fields = (
-            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',)
+            'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
+        )
+        read_only_fields = ('verified', )
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
 
@@ -140,3 +143,25 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'parent',
             # 'activities'
         )
+
+class LikeSerializer(serializers.ModelSerializer):
+    class  Meta:
+        model = Like
+        fields = (
+            'id', 'user', 'time', 'Comment',
+        )
+
+class BaseAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BaseActivity
+        fields = ('path', )
+
+class PublicAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PublicAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PrivateAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
