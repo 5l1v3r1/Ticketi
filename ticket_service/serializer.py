@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, BaseActivity
+from models import Ticket, Type, Tag, Comment, BaseActivity, Like
 from django.contrib.auth.models import User
 import datetime
 
@@ -100,7 +100,8 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = (
-            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',)
+            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
+        )
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
 
@@ -142,4 +143,11 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'minimum_approvers_count',
             'parent',
             'Activity'
+        )
+
+class LikeSerializer(serializers.ModelSerializer):
+    class  Meta:
+        model = Like
+        fields = (
+            'id', 'user', 'time', 'Comment',
         )

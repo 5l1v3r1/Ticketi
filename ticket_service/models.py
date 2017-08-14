@@ -146,7 +146,7 @@ class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete s
 
     @property
     def likes_count(self):
-        return self.Like_set.count()
+        return self.like_set.count()
 
 class Like (models.Model):
     Comment = models.ForeignKey('Comment')
