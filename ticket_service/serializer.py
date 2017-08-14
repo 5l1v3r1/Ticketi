@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, BaseActivity, Like
+from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
 from django.contrib.auth.models import User
 import datetime
 
@@ -151,3 +151,17 @@ class LikeSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'user', 'time', 'Comment',
         )
+class BaseAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BaseActivity
+        fields = ('path', )
+
+class PublicAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PublicAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket')
+
+class PrivateAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PrivateAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket')
