@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
+from models import Referral, SetConfirmationLimit, EditTicket, ChangeStatus, Reopen
 from django.contrib.auth.models import User
-from ticket_service.activity_serializer import ReferralSerializer
 import datetime
 from django.db.models import Q
 
@@ -93,7 +93,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
         return ticket
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
     likes_nums = serializers.ReadOnlyField(source = 'likes_count')
     user = UserSerializer(read_only = True)
     class Meta:
@@ -102,6 +102,41 @@ class CommentSerializer(serializers.ModelSerializer):
             'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
         )
         read_only_fields = ('verified', )
+
+
+################################# Activities ###################################
+class BaseActivitySerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Referral
+        fields = ('id', 'user', 'time',)
+
+class ReferralSerializer(serializers.ModelSerializer):
+     class Meta(BaseActivitySerializer.Meta):
+        model = Referral
+        fields = BaseActivitySerializer.Meta.fields + ('reffered_to', )
+
+class SetConfirmationLimitSerializer(BaseActivitySerializer):
+    class Meta(BaseActivitySerializer.Meta):
+        model = SetConfirmationLimit
+        fields = BaseActivitySerializer.Meta.fields + ('limit_value', 'need_to_confirmed',)
+
+class EditTicketSerializer(BaseActivitySerializer):
+    class Meta(BaseActivitySerializer.Meta):
+        model = EditTicket
+        fields = BaseActivitySerializer.Meta.fields + ('new_title', 'new_body',)
+
+class ChangeStatusSerializer(BaseActivitySerializer):
+    class Meta(BaseActivitySerializer.Meta):
+        model = ChangeStatus
+        fields = BaseActivitySerializer.Meta.fields + ('new_title', 'new_body',)
+
+class ReopenSerializer(BaseActivitySerializer):
+    class Meta(BaseActivitySerializer.Meta):
+        model = Reopen
+        fields = BaseActivitySerializer.Meta.fields + ('new_ticket',)
+################################################################################
+
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
     known_approvers = UserSerializer(many=True, read_only=True)
@@ -116,6 +151,22 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     comments = serializers.SerializerMethodField('get_comments2') #TODO: edit name
     contributers = serializers.SerializerMethodField('get_contributers2')   #TODO: edit name
     in_list_contributers = serializers.SerializerMethodField('get_in_list_contributers2')   #TODO: edit name
+    activities = serializers.SerializerMethodField('get_activities2')   #TODO: edit name
+
+    def get_activities2(self, ticket):
+        referral = ReferralSerializer(instance=Referral.objects.filter(Q(ticket=ticket)), many=True)
+        setConfirmationLimit = SetConfirmationLimitSerializer(instance=SetConfirmationLimit.objects.filter(Q(ticket=ticket)), many=True)
+        editTicket = EditTicketSerializer(instance=EditTicket.objects.filter(Q(ticket=ticket)), many=True)
+        changeStatus = ChangeStatusSerializer(instance=ChangeStatus.objects.filter(Q(ticket=ticket)), many=True)
+        reopen = ReopenSerializer(instance=Reopen.objects.filter(Q(ticket=ticket)), many=True)
+        return {
+            'referral': referral.data,
+            'setConfirmationLimit': setConfirmationLimit.data,
+            'editTicket': editTicket.data,
+            'changeStatus': changeStatus.data,
+            'reopen': reopen.data
+        }
+
 
     def get_comments2(self, ticket):
         queryset = []
@@ -142,14 +193,13 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     def get_in_list_contributers2(self, ticket):
         queryset = []
         requested_user = self.context['request'].user
-        if not ticket.being_unknown or \
-        requested_user in ticket.contributers.all() or \
+        if requested_user in ticket.contributers.all() or \
         requested_user in ticket.in_list_contributers.all():
             queryset = ticket.in_list_contributers.all()
 
         serializer = UserSerializer(instance=queryset, many=True)
         return serializer.data
-        
+
     class Meta:
         model = Ticket
         fields = (
@@ -175,7 +225,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'need_to_confirmed',
             'minimum_approvers_count',
             'parent',
-            # 'activities'
+            'activities',
             'comments',
         )
 

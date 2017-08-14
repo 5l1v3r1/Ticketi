@@ -84,17 +84,6 @@ class Ticket (models.Model):
     def get_denials_count(self):
         return self.known_denials.count() + self.unknown_denials.count()
 
-    # @priority
-    # def get_activities(self):
-    #     return self.known_denials.count() + self.unknown_denials.count()
-    #     # return {
-    #     #     'ChangeStatus': self.ticket_service_changestatus_related,
-    #     #     'EditTicket': self.ticket_service_editticket_related,
-    #     #     'Referral': self.ticket_service_referral_related.count(),
-    #     #     'Reopen': self.ticket_service_reopen_related,
-    #     #     'SetConfirmationLimit': self.Ticket_service_setconfirmationlimit_related
-    #     # }
-
     def __str__(self):
         return self.title
 
@@ -173,7 +162,7 @@ class SetConfirmationLimit (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class EditTicket (BaseActivity):
+class EditTicket (BaseActivity): #TODO: vaghti edit mikone, noskhe ghabli ro negah dare, injoori hame ro darim!
     new_body = models.TextField()
     new_title = models.CharField(max_length=500)
 
