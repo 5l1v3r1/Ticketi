@@ -97,11 +97,13 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_count')
+    user = UserSerializer(read_only = True)
     class Meta:
         model = Comment
         fields = (
-            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
+            'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
         )
+        read_only_fields = ('verified', )
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
 
