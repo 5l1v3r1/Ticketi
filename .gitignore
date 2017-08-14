@@ -100,3 +100,4 @@ ENV/
 
 #database
 mydatabase
+migrations

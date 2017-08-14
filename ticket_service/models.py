@@ -120,21 +120,23 @@ class Department (models.Model):
     def __str__(self):
         return self.title
 
-class BaseAttachments (models.Model): #TODO: esm az halate jam kharej beshe
+class BaseAttachment (models.Model): #DONE: esm az halate jam kharej beshe
     path = models.CharField(max_length=500)
+    class Meta:
+        abstract = True
 
-class PublicAttachments (BaseAttachments): #TODO: esm az halate jam kharej beshe
+class PublicAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
     ticket = models.ForeignKey('Ticket')
 
-class PrivateAttachments (BaseAttachments): #TODO: esm az halate jam kharej beshe
+class PrivateAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
     ticket = models.ForeignKey('PrivateTicket')
 
-class Comments (models.Model): #TODO: ye field ham bayad bezaarim ke age delete shod TRUE beshe #TODO: esm az halate jam kharej beshe
+class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete shod TRUE beshe #DONE: esm az halate jam kharej beshe
     body = models.TextField()
     user = models.ForeignKey(User)
     ticket = models.ForeignKey('Ticket')
     creation_time = models.DateField(auto_now_add=True)
-    parent = models.ForeignKey('Comments', default = None, null = True, blank = True)
+    parent = models.ForeignKey('Comment', default = None, null = True, blank = True)
     being_unknown = models.BooleanField(default = False)
     verified = models.BooleanField(default = False)
 
@@ -143,11 +145,11 @@ class Comments (models.Model): #TODO: ye field ham bayad bezaarim ke age delete 
         return self.Like_set.count()
 
 class Like (models.Model):
-    comments = models.ForeignKey('Comments')
+    Comment = models.ForeignKey('Comment')
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
 
-class Activities (models.Model): #TODO: esm az halate jam kharej beshe  #TODO: Base bezaarim tahesh!
+class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #TODO: Base bezaarim tahesh!
     ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_activity_ticket_related",
                                 related_query_name="%(app_label)s_%(class)s_activity_ticket_relateds",)
     user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_activity_user_related",
@@ -157,19 +159,19 @@ class Activities (models.Model): #TODO: esm az halate jam kharej beshe  #TODO: B
     class Meta:
         abstract = True
 
-class Referral (Activities):
+class Referral (BaseActivity):
     reffered_to = models.ManyToManyField(User)
 
-class SetConfirmationLimit (Activities):
+class SetConfirmationLimit (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class edit (Activities):
+class edit (BaseActivity):
     new_body = models.TextField()
     new_title = models.CharField(max_length=500)
 
-class ChangeStatus (Activities):
+class ChangeStatus (BaseActivity):
     status = models.CharField(choices = Ticket.STATUS_CHOICES, max_length=15)
 
-class Reopen (Activities):
+class Reopen (BaseActivity):
     new_ticket = models.ForeignKey('Ticket')
