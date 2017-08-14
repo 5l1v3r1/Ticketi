@@ -114,7 +114,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
     tag_list = TagSerializer(many=True, read_only=True)
     Comment = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
-    Activity = ActivitySerializer(many=True, source='Activity_set')
+    Activity = ActivitySerializer(many=True, source='get_activities')
 
     class Meta:
         model = Ticket
