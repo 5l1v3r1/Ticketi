@@ -113,8 +113,13 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
     tag_list = TagSerializer(many=True, read_only=True)
+<<<<<<< HEAD
     comments = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
     activities = ActivitySerializer(many=True, source='activities_set')
+=======
+    Comment = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
+    Activity = ActivitySerializer(many=True, source='get_activities')
+>>>>>>> 4b8d0137d68afd2f5360dafa8abe9332fde7cd73
 
     class Meta:
         model = Ticket
