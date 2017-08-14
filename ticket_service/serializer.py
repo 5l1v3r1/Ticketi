@@ -52,12 +52,12 @@ class TicketSerializer(serializers.ModelSerializer):
             'tag_list',
             'creation_time', # read_only
             'status', # read_only
-            'contributers',
+            'contributers', # read_only
             'need_to_confirmed', # read_only
             'minimum_approvers_count', # read_only
             'parent',
         )
-        read_only_fields = ('creation_time', 'status', 'need_to_confirmed', 'minimum_approvers_count')
+        read_only_fields = ('creation_time', 'contributers', 'status', 'need_to_confirmed', 'minimum_approvers_count')
         extra_kwargs = {
             'body': {'write_only': True},
             'summary_len': {'write_only': True},
@@ -94,7 +94,7 @@ class TicketSerializer(serializers.ModelSerializer):
         return ticket
 
 class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
-    likes_nums = serializers.ReadOnlyField(source = 'likes_count')
+    likes_nums = serializers.ReadOnlyField(source = 'likes_count') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
     user = UserSerializer(read_only = True)
     class Meta:
         model = Comment
@@ -129,7 +129,7 @@ class EditTicketSerializer(BaseActivitySerializer):
 class ChangeStatusSerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):
         model = ChangeStatus
-        fields = BaseActivitySerializer.Meta.fields + ('new_title', 'new_body',)
+        fields = BaseActivitySerializer.Meta.fields + ('status',)
 
 class ReopenSerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):

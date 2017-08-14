@@ -24,7 +24,7 @@ class TicketView(generics.ListCreateAPIView):
 class TicketDetailsView(generics.RetrieveAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketDetailsSerializer
-    permission_classes = [IsOwnerOrReadOnly]
+    # permission_classes = [IsOwnerOrReadOnly]
 
 class CommentView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
