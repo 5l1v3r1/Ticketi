@@ -73,13 +73,6 @@ class Ticket (models.Model):
     parent = models.ForeignKey('Ticket', null = True, blank = True)
 
     @property
-    def get_contributers(self):
-        if self.being_unknown:
-            return []
-        else:
-            return self.contributers.all()
-
-    @property
     def get_summary_body(self):
         return self.body[0:self.summary_len]
 
@@ -90,10 +83,6 @@ class Ticket (models.Model):
     @property
     def get_denials_count(self):
         return self.known_denials.count() + self.unknown_denials.count()
-
-    @property
-    def get_comments(self):
-        return self.comment_set.all()
 
     # @priority
     # def get_activities(self):
@@ -158,6 +147,9 @@ class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete s
     @property
     def likes_count(self):
         return self.like_set.count()
+
+    def __str__(self):
+        return self.body[0:10] + '...'
 
 class Like (models.Model):
     Comment = models.ForeignKey('Comment')

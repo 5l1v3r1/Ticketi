@@ -3,6 +3,7 @@ from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttach
 from django.contrib.auth.models import User
 from ticket_service.activity_serializer import ReferralSerializer
 import datetime
+from django.db.models import Q
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -103,7 +104,6 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ('verified', )
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
-
     known_approvers = UserSerializer(many=True, read_only=True)
     known_denials = UserSerializer(many=True, read_only=True)
     ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
@@ -111,11 +111,45 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     denials_count = serializers.ReadOnlyField(source='get_denials_count')
     addressed_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
-    contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
     tag_list = TagSerializer(many=True, read_only=True)
-    comments = CommentSerializer(many=True, read_only=True, source='get_comments') #TODO: test comment
-    # activities = ReferralSerializer(source='ticket_service_referral_related')
 
+    comments = serializers.SerializerMethodField('get_comments2') #TODO: edit name
+    contributers = serializers.SerializerMethodField('get_contributers2')   #TODO: edit name
+    in_list_contributers = serializers.SerializerMethodField('get_in_list_contributers2')   #TODO: edit name
+
+    def get_comments2(self, ticket):
+        queryset = []
+        requested_user = self.context['request'].user
+        if requested_user in ticket.contributers.all():
+            queryset = Comment.objects.filter(Q(ticket=ticket))
+        else:
+            queryset = Comment.objects.filter(Q(ticket=ticket) & Q(verified=True))
+
+        serializer = CommentSerializer(instance=queryset, many=True)
+        return serializer.data
+
+    def get_contributers2(self, ticket):
+        queryset = []
+        requested_user = self.context['request'].user
+        if not ticket.being_unknown or \
+        requested_user in ticket.contributers.all() or \
+        requested_user in ticket.in_list_contributers.all():
+            queryset = ticket.contributers.all()
+
+        serializer = UserSerializer(instance=queryset, many=True)
+        return serializer.data
+
+    def get_in_list_contributers2(self, ticket):
+        queryset = []
+        requested_user = self.context['request'].user
+        if not ticket.being_unknown or \
+        requested_user in ticket.contributers.all() or \
+        requested_user in ticket.in_list_contributers.all():
+            queryset = ticket.in_list_contributers.all()
+
+        serializer = UserSerializer(instance=queryset, many=True)
+        return serializer.data
+        
     class Meta:
         model = Ticket
         fields = (
@@ -129,10 +163,10 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'known_denials',
             'approvers_count',
             'denials_count',
-            'comments',
             'addressed_users',
             'cc_users',
             'contributers',
+            'in_list_contributers',
             'is_public',
             'being_unknown',
             'tag_list',
@@ -142,6 +176,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'minimum_approvers_count',
             'parent',
             # 'activities'
+            'comments',
         )
 
 class LikeSerializer(serializers.ModelSerializer):
