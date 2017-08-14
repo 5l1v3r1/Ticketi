@@ -91,6 +91,10 @@ class Ticket (models.Model):
     def get_denials_count(self):
         return self.known_denials.count() + self.unknown_denials.count()
 
+    @property
+    def get_activities(self):
+        return self._meta.get_all_related_objects()
+
     def __str__(self):
         return self.title
 
