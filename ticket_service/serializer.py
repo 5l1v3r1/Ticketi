@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag
+from models import Ticket, Type, Tag, Comments
 from django.contrib.auth.models import User
 import datetime
 
@@ -89,3 +89,11 @@ class TicketSerializer(serializers.ModelSerializer):
             ticket.unknown_approvers.add(self.context['request'].user)
 
         return ticket
+
+class CommentSerializer(serializers.ModelSerializer):
+    likes_nums = serializers.ReadOnlyField(source = 'likes_count')
+    class Meta:
+        model = Comments
+        fields = (
+            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
+        )

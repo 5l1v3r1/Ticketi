@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from rest_framework import generics
-from .serializer import TicketSerializer
-from .models import Ticket
+from .serializer import TicketSerializer, CommentSerializer
+from .models import Ticket, Comments
 from rest_framework.pagination import PageNumberPagination
 from permissions import IsOwnerOrReadOnly
 
@@ -25,3 +25,7 @@ class TicketDetailsView(generics.RetrieveAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     permission_classes = [IsOwnerOrReadOnly]
+
+class CommentView(generics.ListCreateAPIView):
+    queryset = Comments.objects.all()
+    serializer_class = CommentSerializer
