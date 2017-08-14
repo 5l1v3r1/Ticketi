@@ -1,7 +1,12 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag
+from models import Ticket, Type, Tag, Comments, Activities
 from django.contrib.auth.models import User
 import datetime
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Activities
+        fields = ('id', )
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -89,3 +94,50 @@ class TicketSerializer(serializers.ModelSerializer):
             ticket.unknown_approvers.add(self.context['request'].user)
 
         return ticket
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = '__all__'
+
+class TicketDetailsSerializer(serializers.ModelSerializer):
+
+    known_approvers = UserSerializer(many=True, read_only=True)
+    known_denials = UserSerializer(many=True, read_only=True)
+    ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
+    approvers_count = serializers.ReadOnlyField(source='get_approvers_count')
+    denials_count = serializers.ReadOnlyField(source='get_denials_count')
+    addressed_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
+    cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
+    contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
+    tag_list = TagSerializer(many=True, read_only=True)
+    comments = UserSerializer(many=True, read_only=True, source='get_contributers') #TODO: test comment
+    activities = ActivitySerializer(many=True, source='activities_set')
+
+    class Meta:
+        model = Ticket
+        fields = (
+            'id',
+            'title',
+            'body',
+            'summary_len',
+            'ticket_type',
+            'priority',
+            'known_approvers',
+            'known_denials',
+            'approvers_count',
+            'denials_count',
+            'comments',
+            'addressed_users',
+            'cc_users',
+            'contributers',
+            'is_public',
+            'being_unknown',
+            'tag_list',
+            'creation_time',
+            'status',
+            'need_to_confirmed',
+            'minimum_approvers_count',
+            'parent',
+            'activities'
+        )

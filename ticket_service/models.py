@@ -120,16 +120,16 @@ class Department (models.Model):
     def __str__(self):
         return self.title
 
-class BaseAttachments (models.Model):
+class BaseAttachments (models.Model): #TODO: esm az halate jam kharej beshe
     path = models.CharField(max_length=500)
 
-class PublicAttachments (BaseAttachments):
+class PublicAttachments (BaseAttachments): #TODO: esm az halate jam kharej beshe
     ticket = models.ForeignKey('Ticket')
 
-class PrivateAttachments (BaseAttachments):
+class PrivateAttachments (BaseAttachments): #TODO: esm az halate jam kharej beshe
     ticket = models.ForeignKey('PrivateTicket')
 
-class Comments (models.Model):
+class Comments (models.Model): #TODO: ye field ham bayad bezaarim ke age delete shod TRUE beshe #TODO: esm az halate jam kharej beshe
     body = models.TextField()
     user = models.ForeignKey(User)
     ticket = models.ForeignKey('Ticket')
@@ -143,10 +143,15 @@ class Like (models.Model):
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
 
-class Activities (models.Model):
-    ticket = models.ForeignKey('Ticket')
-    user = models.ForeignKey(User)
+class Activities (models.Model): #TODO: esm az halate jam kharej beshe  #TODO: Base bezaarim tahesh!
+    ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_activity_ticket_related",
+                                related_query_name="%(app_label)s_%(class)s_activity_ticket_relateds",)
+    user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_activity_user_related",
+                                related_query_name="%(app_label)s_%(class)s_activity_user_relateds",)
     time = models.DateField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
 
 class Referral (Activities):
     reffered_to = models.ManyToManyField(User)
