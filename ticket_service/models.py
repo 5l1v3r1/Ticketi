@@ -134,9 +134,13 @@ class Comments (models.Model): #TODO: ye field ham bayad bezaarim ke age delete 
     user = models.ForeignKey(User)
     ticket = models.ForeignKey('Ticket')
     creation_time = models.DateField(auto_now_add=True)
-    parent = models.ForeignKey('Comments', default = None)
+    parent = models.ForeignKey('Comments', default = None, null = True, blank = True)
     being_unknown = models.BooleanField(default = False)
     verified = models.BooleanField(default = False)
+
+    @property
+    def likes_count(self):
+        return self.Like_set.count()
 
 class Like (models.Model):
     comments = models.ForeignKey('Comments')

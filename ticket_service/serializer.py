@@ -96,9 +96,11 @@ class TicketSerializer(serializers.ModelSerializer):
         return ticket
 
 class CommentSerializer(serializers.ModelSerializer):
+    likes_nums = serializers.ReadOnlyField(source = 'likes_count')
     class Meta:
-        model = Ticket
-        fields = '__all__'
+        model = Comments
+        fields = (
+            'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
 
 class TicketDetailsSerializer(serializers.ModelSerializer):
 
