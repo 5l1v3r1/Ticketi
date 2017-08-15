@@ -1,10 +1,6 @@
 from rest_framework import serializers
-<<<<<<< HEAD
-from models import Ticket, Type, Tag, Comment, BaseActivity, Like
-=======
 from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
 from models import Referral, SetConfirmationLimit, EditTicket, ChangeStatus, Reopen
->>>>>>> c8e09daf6cc5853398fb0881e14331031cb38fab
 from django.contrib.auth.models import User
 import datetime
 from django.db.models import Q
@@ -244,3 +240,13 @@ class BaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = BaseActivity
         fields = ('path', )
+
+class PublicAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PublicAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PrivateAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
