@@ -73,13 +73,6 @@ class Ticket (models.Model):
     parent = models.ForeignKey('Ticket', null = True, blank = True)
 
     @property
-    def get_contributers(self):
-        if self.being_unknown:
-            return []
-        else:
-            return self.contributers.all()
-
-    @property
     def get_summary_body(self):
         return self.body[0:self.summary_len]
 
@@ -90,10 +83,6 @@ class Ticket (models.Model):
     @property
     def get_denials_count(self):
         return self.known_denials.count() + self.unknown_denials.count()
-
-    @property
-    def get_activities(self):
-        return self._meta.get_all_related_objects()
 
     def __str__(self):
         return self.title
@@ -148,16 +137,19 @@ class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete s
     def likes_count(self):
         return self.like_set.count()
 
+    def __str__(self):
+        return self.body[0:10] + '...'
+
 class Like (models.Model):
     Comment = models.ForeignKey('Comment')
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
 
-class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #TODO: Base bezaarim tahesh!
-    ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_activity_ticket_related",
-                                related_query_name="%(app_label)s_%(class)s_activity_ticket_relateds",)
-    user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_activity_user_related",
-                                related_query_name="%(app_label)s_%(class)s_activity_user_relateds",)
+class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #Done: Base bezaarim tahesh!
+    ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_related",
+                                related_query_name="%(app_label)s_%(class)s_relateds",)
+    user = models.ForeignKey(User, related_name="%(app_label)s_%(class)s_related",
+                                related_query_name="%(app_label)s_%(class)s_relateds",)
     time = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -170,7 +162,7 @@ class SetConfirmationLimit (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class edit (BaseActivity):
+class EditTicket (BaseActivity): #TODO: vaghti edit mikone, noskhe ghabli ro negah dare, injoori hame ro darim!
     new_body = models.TextField()
     new_title = models.CharField(max_length=500)
 
