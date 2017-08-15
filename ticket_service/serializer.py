@@ -172,9 +172,9 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
         queryset = []
         requested_user = self.context['request'].user
         if requested_user in ticket.contributers.all():
-            queryset = Comment.objects.filter(Q(ticket=ticket))
+            queryset = Comment.objects.filter(Q(ticket=ticket) & Q(deleted=False))
         else:
-            queryset = Comment.objects.filter(Q(ticket=ticket) & Q(verified=True))
+            queryset = Comment.objects.filter(Q(ticket=ticket) & Q(verified=True) & Q(deleted=False))
 
         serializer = CommentSerializer(instance=queryset, many=True)
         return serializer.data

@@ -124,7 +124,7 @@ class PublicAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
 class PrivateAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
     ticket = models.ForeignKey('PrivateTicket')
 
-class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete shod TRUE beshe #DONE: esm az halate jam kharej beshe
+class Comment (models.Model):
     body = models.TextField()
     user = models.ForeignKey(User)
     ticket = models.ForeignKey('Ticket')
@@ -132,6 +132,7 @@ class Comment (models.Model): #TODO: ye field ham bayad bezaarim ke age delete s
     parent = models.ForeignKey('Comment', default = None, null = True, blank = True)
     being_unknown = models.BooleanField(default = False)
     verified = models.BooleanField(default = False)
+    deleted = models.BooleanField(default = False)
 
     @property
     def likes_count(self):
