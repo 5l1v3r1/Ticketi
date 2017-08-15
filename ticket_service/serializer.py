@@ -243,11 +243,21 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
         )
 
 class LikeSerializer(serializers.ModelSerializer): #TODO: dislike ham beshe.
+    user = UserSerializer(read_only=True)
     class  Meta:
         model = Like
         fields = (
             'id', 'user', 'time', 'Comment',
         )
+        read_only_fields = ('user', )
+
+    def create(self, validated_data):
+        like = Like(
+            user = self.context['request'].user,
+            Comment = validated_data['Comment'],
+        )
+        like.save()
+        return like
 
 
 class BaseAttachmentSerializer(serializers.ModelSerializer):
