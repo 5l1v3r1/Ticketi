@@ -96,12 +96,12 @@ class TicketSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
     likes_nums = serializers.ReadOnlyField(source = 'likes_count') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
     user = UserSerializer(read_only=True)
-    class Meta:
+    class Meta:                                       #TODO: ejazeye delete ba permission dade beshe
         model = Comment
         fields = (
             'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
         )
-        read_only_fields = ('verified', 'user' )
+        read_only_fields = ('verified', 'user', )
 
     def create(self, validated_data):
         comment = Comment(
@@ -242,12 +242,13 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'comments',
         )
 
-class LikeSerializer(serializers.ModelSerializer): #TODO: harki faqat ye bar betune like kone. dislike ham beshe.
+class LikeSerializer(serializers.ModelSerializer): #TODO: dislike ham beshe.
     class  Meta:
         model = Like
         fields = (
             'id', 'user', 'time', 'Comment',
         )
+
 
 class BaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta:

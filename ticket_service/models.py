@@ -145,6 +145,8 @@ class Like (models.Model):
     Comment = models.ForeignKey('Comment')
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
+    class Meta:
+        unique_together = ['user', 'Comment']
 
 class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #Done: Base bezaarim tahesh!
     ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_related",
