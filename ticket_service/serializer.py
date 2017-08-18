@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
 from models import Referral, SetConfirmationLimit, EditTicket, ChangeStatus, Reopen
+from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.models import User
 import datetime
 from django.db.models import Q
@@ -94,7 +95,7 @@ class TicketSerializer(serializers.ModelSerializer):
         return ticket
 
 class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
-    likes_nums = serializers.ReadOnlyField(source = 'likes_count') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
+    likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
     user = UserSerializer(read_only=True)
     class Meta:                                       #TODO: ejazeye delete ba permission dade beshe
         model = Comment
@@ -111,11 +112,16 @@ class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exi
             creation_time = datetime.datetime.now(),
             parent = validated_data['parent'],
             ticket = validated_data['ticket'],
+            verified = not validated_data['being_unknown'],
         )
         comment.save()
         return comment
 
-
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ('id', 'user', 'comment')
+        read_only_fields = ('id', 'user', 'comment')
 
 ################################# Activities ###################################
 class BaseActivitySerializer(serializers.ModelSerializer):
@@ -151,7 +157,7 @@ class ReopenSerializer(BaseActivitySerializer):
 ################################################################################
 
 
-class TicketDetailsSerializer(serializers.ModelSerializer):
+class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi ham bayad ezafe beshe vase inke masalan ray ma chi bode o ina!
     known_approvers = UserSerializer(many=True, read_only=True)
     known_denials = UserSerializer(many=True, read_only=True)
     ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
@@ -242,23 +248,6 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'comments',
         )
 
-class LikeSerializer(serializers.ModelSerializer): #TODO: dislike ham beshe.
-    user = UserSerializer(read_only=True)
-    class  Meta:
-        model = Like
-        fields = (
-            'id', 'user', 'time', 'Comment',
-        )
-        read_only_fields = ('user', )
-
-    def create(self, validated_data):
-        like = Like(
-            user = self.context['request'].user,
-            Comment = validated_data['Comment'],
-        )
-        like.save()
-        return like
-
 
 class BaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -274,3 +263,36 @@ class PrivateAttachmentSerializer(BaseAttachmentSerializer):
     class Meta(BaseAttachmentSerializer.Meta):
         model = PrivateAttachment
         fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class ContributeSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'reject'),
+        (1, 'accept')
+    )
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES)
+    class Meta:
+        model = Ticket
+        fields = ('request_type', )
+
+class VoteSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'unset'),
+        (1, 'set')
+    )
+
+    VOTE_CHOICES = (
+        (0, 'denial'),
+        (1, 'approve')
+    )
+
+    IDENTITY_CHOICES = (
+        (0, 'unknown'),
+        (1, 'known')
+    )
+
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES)
+    vote = serializers.ChoiceField(choices=VOTE_CHOICES)
+    identity = serializers.ChoiceField(choices=IDENTITY_CHOICES)
+    class Meta:
+        model = Ticket
+        fields = ('request_type', 'vote', 'identity', )
