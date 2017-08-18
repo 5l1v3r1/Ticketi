@@ -96,7 +96,19 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
     likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
-    user = UserSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
+    def get_user(self, comment):
+        if not comment.being_unknown:
+            serializer = UserSerializer(instance=comment.user)
+            return serializer.data
+        return None
+    # body = serializers.SerializerMethodField() #TODO: baraye delete shode ha body eshoon ro khali bargardonim + ino uncomment konim toye new coooment moshkel mikhorim!
+    # def get_body(self, comment):
+    #     if not comment.deleted:
+    #         return comment.body
+    #     else:
+    #         return ''
+
     class Meta:                                       #DONE: ejazeye delete ba permission dade beshe
         model = Comment
         fields = (
@@ -119,7 +131,13 @@ class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exi
 
 class CommentDetailsSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
-    user = UserSerializer(read_only=True)
+    user = serializers.SerializerMethodField()
+    def get_user(self, comment):
+        if not comment.being_unknown:
+            serializer = UserSerializer(instance=comment.user)
+            return serializer.data
+        return None
+        
     class Meta:
         model = Comment
         fields = (
