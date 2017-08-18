@@ -97,12 +97,12 @@ class TicketSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
     likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
     user = UserSerializer(read_only=True)
-    class Meta:                                       #TODO: ejazeye delete ba permission dade beshe
+    class Meta:                                       #DONE: ejazeye delete ba permission dade beshe
         model = Comment
         fields = (
-            'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
+            'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums', 'edited',
         )
-        read_only_fields = ('verified', 'user', )
+        read_only_fields = ('verified', 'user', 'edited' )
 
     def create(self, validated_data):
         comment = Comment(
@@ -116,6 +116,53 @@ class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exi
         )
         comment.save()
         return comment
+
+class CommentDetailsSerializer(serializers.ModelSerializer):
+    likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Comment
+        fields = (
+            'body',
+            'being_unknown',
+            'parent',
+            'ticket',
+            'id',
+            'user',
+            'creation_time',
+            'verified',
+            'likes_nums',
+            'edited',
+            'deleted'
+        )
+        read_only_fields = (
+            # 'body',
+            # 'being_unknown',
+            'parent',
+            'ticket',
+            'id',
+            'user',
+            'creation_time',
+            'verified',
+            'likes_nums',
+            'edited',
+            'deleted'
+        )
+    read_only_fields = ('deleted', )
+
+    def update(self, instance, validated_data):
+        new_body = validated_data['body']
+        being_unknown = validated_data['being_unknown']
+
+        if new_body != instance.body:
+            instance.edited = True
+            instance.body = new_body
+
+        instance.being_unknown = being_unknown
+        instance.verified = not being_unknown
+
+        instance.save()
+        return instance
 
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -167,12 +214,12 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     tag_list = TagSerializer(many=True, read_only=True)
 
-    comments = serializers.SerializerMethodField('get_comments2') #TODO: edit name
-    contributers = serializers.SerializerMethodField('get_contributers2')   #TODO: edit name
-    in_list_contributers = serializers.SerializerMethodField('get_in_list_contributers2')   #TODO: edit name
-    activities = serializers.SerializerMethodField('get_activities2')   #TODO: edit name
+    comments = serializers.SerializerMethodField() #DONE: edit name
+    contributers = serializers.SerializerMethodField()   #DONE: edit name
+    in_list_contributers = serializers.SerializerMethodField()   #DONE: edit name
+    activities = serializers.SerializerMethodField()   #DONE: edit name
 
-    def get_activities2(self, ticket):
+    def get_activities(self, ticket):
         referral = ReferralSerializer(instance=Referral.objects.filter(Q(ticket=ticket)), many=True)
         setConfirmationLimit = SetConfirmationLimitSerializer(instance=SetConfirmationLimit.objects.filter(Q(ticket=ticket)), many=True)
         editTicket = EditTicketSerializer(instance=EditTicket.objects.filter(Q(ticket=ticket)), many=True)
@@ -187,7 +234,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
         }
 
 
-    def get_comments2(self, ticket):
+    def get_comments(self, ticket):
         queryset = []
         requested_user = self.context['request'].user
         if requested_user in ticket.contributers.all():
@@ -198,7 +245,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
         serializer = CommentSerializer(instance=queryset, many=True)
         return serializer.data
 
-    def get_contributers2(self, ticket):
+    def get_contributers(self, ticket):
         queryset = []
         requested_user = self.context['request'].user
         if not ticket.being_unknown or \
@@ -209,7 +256,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
         serializer = UserSerializer(instance=queryset, many=True)
         return serializer.data
 
-    def get_in_list_contributers2(self, ticket):
+    def get_in_list_contributers(self, ticket):
         queryset = []
         requested_user = self.context['request'].user
         if requested_user in ticket.contributers.all() or \
@@ -218,6 +265,9 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
 
         serializer = UserSerializer(instance=queryset, many=True)
         return serializer.data
+
+    # def update(self, instance, validated_data):
+    #     pass
 
     class Meta:
         model = Ticket
@@ -247,7 +297,32 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'activities',
             'comments',
         )
-
+        read_only_fields = (
+            'id',
+            # 'title',
+            # 'body',
+            # 'summary_len',
+            # 'ticket_type',
+            # 'priority',
+            'known_approvers',
+            'known_denials',
+            'approvers_count',
+            'denials_count',
+            'addressed_users',
+            'cc_users',
+            'contributers',
+            'in_list_contributers', #TODO: edit in ham bayad ezafe beshe!
+            'is_public',
+            # 'being_unknown',
+            # 'tag_list',
+            'creation_time',
+            'status',
+            'need_to_confirmed',
+            'minimum_approvers_count',
+            'parent',
+            'activities',
+            'comments',
+        )
 
 class BaseAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -272,6 +347,16 @@ class ContributeSerializer(serializers.ModelSerializer):
     request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES)
     class Meta:
         model = Ticket
+        fields = ('request_type', )
+
+class CommentJudgmentSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'reject'),
+        (1, 'accept')
+    )
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES)
+    class Meta:
+        model = Comment
         fields = ('request_type', )
 
 class VoteSerializer(serializers.ModelSerializer):

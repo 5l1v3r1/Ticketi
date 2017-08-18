@@ -133,6 +133,7 @@ class Comment (models.Model):
     being_unknown = models.BooleanField(default = False)
     verified = models.BooleanField(default = False)
     deleted = models.BooleanField(default = False)
+    edited = models.BooleanField(default = False)
 
     @property
     def likes_num(self):
