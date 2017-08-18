@@ -135,18 +135,18 @@ class Comment (models.Model):
     deleted = models.BooleanField(default = False)
 
     @property
-    def likes_count(self):
+    def likes_num(self):
         return self.like_set.count()
 
     def __str__(self):
         return self.body[0:10] + '...'
 
 class Like (models.Model):
-    Comment = models.ForeignKey('Comment')
+    comment = models.ForeignKey('Comment')
     user = models.ForeignKey(User)
     time = models.DateField(auto_now_add=True)
     class Meta:
-        unique_together = ['user', 'Comment']
+        unique_together = ['user', 'comment']
 
 class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #Done: Base bezaarim tahesh!
     ticket = models.ForeignKey('Ticket', related_name="%(app_label)s_%(class)s_related",
