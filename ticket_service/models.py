@@ -54,18 +54,24 @@ class Ticket (models.Model):
     tag_list = models.ManyToManyField('Tag', blank=True)
     creation_time = models.DateField(auto_now_add=True) #TODO: ezafe kardane saAt
 
-    PENDING = 'PENDING'
-    PROGRESSING = 'PROGRESSING'
+    OPEN = 'OPEN'
+    WAITING = 'WAITING'
+    INPROGRESS = 'INPROGRESS'
+    FINISHED = 'FINISHED'
+    BLOCKED = 'BLOCKED'
     SOLVED = 'SOLVED'
-    CLOSED = 'CLOSED'
+    CANCLED = 'CANCLED'
     STATUS_CHOICES = (
-        (PENDING, "Pending"),
-        (PROGRESSING, "Progressing"),
-        (SOLVED, "Solved"),
-        (CLOSED, "Closed"),
+        (OPEN, OPEN),
+        (WAITING, WAITING),
+        (INPROGRESS, INPROGRESS),
+        (FINISHED, FINISHED),
+        (BLOCKED, BLOCKED),
+        (SOLVED, SOLVED),
+        (CANCLED, CANCLED),
     )
 
-    status = models.CharField(choices = STATUS_CHOICES, default = PENDING, max_length = 15)
+    status = models.CharField(choices = STATUS_CHOICES, default = OPEN, max_length = 15)
 
     need_to_confirmed = models.BooleanField(default = False)
     minimum_approvers_count = models.IntegerField(default = 0)
@@ -113,7 +119,7 @@ class Department (models.Model):
     def __str__(self):
         return self.title
 
-class BaseAttachment (models.Model): #DONE: esm az halate jam kharej beshe
+class BaseAttachment (models.Model): #DONE: esm az halate jam kharej beshe #TODO: ye moshkeli ke hast ine ke attachment ghabl az ticket sakhte mishe vali ma attachment haro ghablesh up mikonim!
     path = models.CharField(max_length=500)
     class Meta:
         abstract = True
@@ -159,19 +165,19 @@ class BaseActivity (models.Model): #DONE: esm az halate jam kharej beshe  #Done:
     class Meta:
         abstract = True
 
-class Referral (BaseActivity):
+class ReferralActiviy (BaseActivity):
     reffered_to = models.ManyToManyField(User)
 
-class SetConfirmationLimit (BaseActivity):
+class SetConfirmationLimitActiviy (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class EditTicket (BaseActivity): #TODO: vaghti edit mikone, noskhe ghabli ro negah dare, injoori hame ro darim!
-    new_body = models.TextField()
-    new_title = models.CharField(max_length=500)
+class EditTicketActivity (BaseActivity): #TODO: vaghti edit mikone, noskhe ghabli ro negah dare, injoori hame ro darim!
+    prev_title = models.CharField(max_length=500)
+    prev_body = models.TextField()
 
-class ChangeStatus (BaseActivity):
+class ChangeStatusActivity (BaseActivity):
     status = models.CharField(choices = Ticket.STATUS_CHOICES, max_length=15)
 
-class Reopen (BaseActivity):
+class ReopenActivity (BaseActivity):
     new_ticket = models.ForeignKey('Ticket')

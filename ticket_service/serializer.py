@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
-from models import Referral, SetConfirmationLimit, EditTicket, ChangeStatus, Reopen
+from models import ReferralActiviy, SetConfirmationLimitActiviy, EditTicketActivity, ChangeStatusActivity, ReopenActivity
 from rest_framework.validators import UniqueTogetherValidator
 from django.contrib.auth.models import User
 import datetime
@@ -137,7 +137,7 @@ class CommentDetailsSerializer(serializers.ModelSerializer):
             serializer = UserSerializer(instance=comment.user)
             return serializer.data
         return None
-        
+
     class Meta:
         model = Comment
         fields = (
@@ -192,32 +192,32 @@ class LikeSerializer(serializers.ModelSerializer):
 class BaseActivitySerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
-        model = Referral
+        model = ReferralActiviy
         fields = ('id', 'user', 'time',)
 
-class ReferralSerializer(serializers.ModelSerializer):
+class ReferralActivitySerializer(serializers.ModelSerializer):
      class Meta(BaseActivitySerializer.Meta):
-        model = Referral
+        model = ReferralActiviy
         fields = BaseActivitySerializer.Meta.fields + ('reffered_to', )
 
-class SetConfirmationLimitSerializer(BaseActivitySerializer):
+class SetConfirmationLimitActivitySerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):
-        model = SetConfirmationLimit
+        model = SetConfirmationLimitActiviy
         fields = BaseActivitySerializer.Meta.fields + ('limit_value', 'need_to_confirmed',)
 
-class EditTicketSerializer(BaseActivitySerializer):
+class EditTicketActivitySerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):
-        model = EditTicket
-        fields = BaseActivitySerializer.Meta.fields + ('new_title', 'new_body',)
+        model = EditTicketActivity
+        fields = BaseActivitySerializer.Meta.fields + ('prev_title', 'prev_body',)
 
-class ChangeStatusSerializer(BaseActivitySerializer):
+class ChangeStatusActivitySerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):
-        model = ChangeStatus
+        model = ChangeStatusActivity
         fields = BaseActivitySerializer.Meta.fields + ('status',)
 
-class ReopenSerializer(BaseActivitySerializer):
+class ReopenActivitySerializer(BaseActivitySerializer):
     class Meta(BaseActivitySerializer.Meta):
-        model = Reopen
+        model = ReopenActivity
         fields = BaseActivitySerializer.Meta.fields + ('new_ticket',)
 ################################################################################
 
@@ -238,11 +238,11 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
     activities = serializers.SerializerMethodField()   #DONE: edit name
 
     def get_activities(self, ticket):
-        referral = ReferralSerializer(instance=Referral.objects.filter(Q(ticket=ticket)), many=True)
-        setConfirmationLimit = SetConfirmationLimitSerializer(instance=SetConfirmationLimit.objects.filter(Q(ticket=ticket)), many=True)
-        editTicket = EditTicketSerializer(instance=EditTicket.objects.filter(Q(ticket=ticket)), many=True)
-        changeStatus = ChangeStatusSerializer(instance=ChangeStatus.objects.filter(Q(ticket=ticket)), many=True)
-        reopen = ReopenSerializer(instance=Reopen.objects.filter(Q(ticket=ticket)), many=True)
+        referral = ReferralActivitySerializer(instance=ReferralActiviy.objects.filter(Q(ticket=ticket)), many=True)
+        setConfirmationLimit = SetConfirmationLimitActivitySerializer(instance=SetConfirmationLimitActiviy.objects.filter(Q(ticket=ticket)), many=True)
+        editTicket = EditTicketActivitySerializer(instance=EditTicketActivity.objects.filter(Q(ticket=ticket)), many=True)
+        changeStatus = ChangeStatusActivitySerializer(instance=ChangeStatusActivity.objects.filter(Q(ticket=ticket)), many=True)
+        reopen = ReopenActivitySerializer(instance=ReopenActivity.objects.filter(Q(ticket=ticket)), many=True)
         return {
             'referral': referral.data,
             'setConfirmationLimit': setConfirmationLimit.data,
@@ -399,3 +399,23 @@ class VoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ('request_type', 'vote', 'identity', )
+
+class SetNeedToConfirmedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ('need_to_confirmed', 'minimum_approvers_count', )
+
+class ChangeStatusSerializer(serializers.ModelSerializer):
+    STATUS_CHOICES = (
+        (0, 'open'),
+        (1, 'waiting'),
+        (2, 'inProgress'),
+        (3, 'finished'),
+        (4, 'closed'),
+        (5, 'cancled'),
+        (6, 'blocked'),
+    )
+    status = serializers.ChoiceField(choices=Ticket.STATUS_CHOICES)
+    class Meta:
+        model = Ticket
+        fields = ('status', )
