@@ -22,6 +22,7 @@ from ticket_service.tickets.comments.views import (
 
 #TODO: set permissions!
 urlpatterns = {
+
     url(r'^tickets/$', TicketView.as_view()),
     url(r'^comments/$', CommentView.as_view()),
     url(r'^comments/(?P<comment_id>[0-9]+)/$', CommentDetailsView.as_view()),
@@ -34,6 +35,8 @@ urlpatterns = {
     url(r'^PublicProfile/$', PublicProfileView.as_view()),
     url(r'^PublicProfile/$', PublicProfileView.as_view()),
     url(r'^PrivateTicket/$', PrivateTicketView.as_view()),
+
+    url(r'^silk/', include('silk.urls', namespace='silk')),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)
