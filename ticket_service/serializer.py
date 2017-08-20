@@ -415,21 +415,6 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'comments',
         )
 
-class BaseAttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BaseActivity
-        fields = ('path', )
-
-class PublicAttachmentSerializer(BaseAttachmentSerializer):
-    class Meta(BaseAttachmentSerializer.Meta):
-        model = PublicAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
-
-class PrivateAttachmentSerializer(BaseAttachmentSerializer):
-    class Meta(BaseAttachmentSerializer.Meta):
-        model = PrivateAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
-
 class ContributeSerializer(serializers.ModelSerializer):
     REQUEST_TYPE_CHOICES = (
         (0, 'reject'),
