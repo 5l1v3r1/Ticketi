@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from rest_framework import generics
-from .models import Ticket, Comment, Like, PrivateAttachment, PublicAttachment
+from .models import Ticket, Comment, Like, PrivateAttachment, PublicAttachment, SetConfirmationLimitActiviy, EditTicketActivity, ReopenActivity
 from rest_framework.pagination import PageNumberPagination
 from permissions import IsOwnerOrReadOnly, IsInListContributers
 from django.db.models import Q
@@ -15,7 +15,11 @@ from .serializer import TicketSerializer, \
                         PublicAttachmentSerializer, \
                         ContributeSerializer, \
                         LikeSerializer, \
-                        VoteSerializer
+                        VoteSerializer, \
+                        SetNeedToConfirmedSerializer, \
+                        ChangeStatusSerializer, \
+                        EditResponsiblesSerializer, \
+                        EditContributersSerializer
 
 from rest_framework.views import APIView
 
@@ -30,7 +34,14 @@ class TicketView(generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
 
     def perform_create(self, serializer):
+        parent = serializer.validated_data['parent']
         serializer.save()
+        if parent:
+            ReopenActivity(
+                user = self.request.user,
+                ticket = parent,
+                new_ticket = Ticket.objects.get(id=serializer.data['id'])
+            ).save()
 
 class TicketDetailsView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
@@ -38,6 +49,17 @@ class TicketDetailsView(generics.RetrieveUpdateAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketDetailsSerializer
     # permission_classes = [IsOwnerOrReadOnly]
+
+    def perform_update(self, serializer):
+        ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
+        EditTicketActivity(
+            user = self.request.user,
+            ticket = ticket,
+            prev_title = ticket.title,
+            prev_body = ticket.body
+        ).save()
+        serializer.save()
+
 
 class CommentView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
@@ -121,6 +143,23 @@ class ContributeView(generics.CreateAPIView):
         else:   # reject
             pass
 
+class SetNeedToConfirmedView(generics.RetrieveUpdateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+
+    queryset = Ticket.objects.all()
+    serializer_class = SetNeedToConfirmedSerializer
+
+    def perform_update(self, serializer):
+        SetConfirmationLimitActiviy(
+            user = self.request.user,
+            ticket = Ticket.objects.get(id=self.kwargs['ticket_id']),
+            need_to_confirmed = serializer.data['need_to_confirmed'],
+            limit_value = serializer.data['minimum_approvers_count']
+        ).save()
+        serializer.save()
+
+
 class VoteView(generics.CreateAPIView):
     lookup_field = 'id'
     lookup_url_kwarg = 'ticket_id'
@@ -153,3 +192,33 @@ class VoteView(generics.CreateAPIView):
                     ticket.unknown_denials.add(user)
         else:   # unset
             pass
+
+class ChangeStatusView(generics.UpdateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+
+    queryset = Ticket.objects.all()
+    serializer_class = ChangeStatusSerializer
+    #TODO: set status permissions
+
+class EditResponsiblesView(generics.CreateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+
+    queryset = Ticket.objects.all()
+    serializer_class = EditResponsiblesSerializer
+
+    def perform_create(self, serializer):
+        ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
+        serializer.save(ticket=ticket)
+
+class EditContributersView(generics.CreateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+
+    queryset = Ticket.objects.all()
+    serializer_class = EditContributersSerializer
+
+    def perform_create(self, serializer):
+        ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
+        serializer.save(ticket=ticket)

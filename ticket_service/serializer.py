@@ -419,3 +419,63 @@ class ChangeStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ('status', )
+
+class EditResponsiblesSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'add'),
+        (1, 'delete')
+    )
+    ADD_AS_CHOICES = (
+        (0, 'addressed'),
+        (1, 'cc')
+    )
+    username = serializers.CharField(write_only=True)
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES, write_only=True)
+    add_as = serializers.ChoiceField(choices=ADD_AS_CHOICES, write_only=True)
+    class Meta:
+        model = Ticket
+        fields = ('username', 'request_type', 'add_as', )
+
+    def create(self, validated_data):
+        ticket = validated_data['ticket']
+        user = User.objects.get(username=validated_data['username'])
+
+        if validated_data['request_type'] == 0: # add
+            if validated_data['add_as'] == 0: # addressed_users
+                ticket.cc_users.remove(user)
+                ticket.addressed_users.add(user)
+            else:   # cc_users
+                ticket.addressed_users.remove(user)
+                ticket.cc_users.add(user)
+        else:   # remove
+            ticket.addressed_users.remove(user)
+            ticket.cc_users.remove(user)
+
+        return ticket
+
+class EditContributersSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'add'),
+        (1, 'delete')
+    )
+    ADD_AS_CHOICES = (
+        (0, 'addressed'),
+        (1, 'cc')
+    )
+    username = serializers.CharField(write_only=True)
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES, write_only=True)
+    class Meta:
+        model = Ticket
+        fields = ('username', 'request_type',)
+
+    def create(self, validated_data):
+        ticket = validated_data['ticket']
+        user = User.objects.get(username=validated_data['username'])
+
+        if validated_data['request_type'] == 0: # add
+            if user not in ticket.contributers.all():
+                ticket.in_list_contributers.add(user)
+        else:   # remove
+            ticket.in_list_contributers.remove(user)
+
+        return ticket
