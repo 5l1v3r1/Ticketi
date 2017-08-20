@@ -11,11 +11,11 @@ from models import (
     BaseAttachment,
 )
 from models import (
-    Referral,
-    SetConfirmationLimit,
-    EditTicket,
-    ChangeStatus,
-    Reopen,
+    ReferralActiviy,
+    SetConfirmationLimitActiviy,
+    EditTicketActivity,
+    ChangeStatusActivity,
+    ReopenActivity,
     ProfilePic,
     Profile,
     PrivateTicket,

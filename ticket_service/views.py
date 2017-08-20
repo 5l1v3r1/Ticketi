@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
+from models import ReferralActiviy, SetConfirmationLimitActiviy, EditTicketActivity, ChangeStatusActivity, ReopenActivity
+from rest_framework.validators import UniqueTogetherValidator
+
 
 from rest_framework import generics
 from rest_framework.permissions import (
@@ -8,6 +12,14 @@ from rest_framework.permissions import (
 from .serializer import (
     TicketSerializer,
     CommentSerializer,
+    CommentDetailsSerializer,
+    CommentJudgmentSerializer,
+    ContributeSerializer,
+    SetNeedToConfirmedSerializer,
+    VoteSerializer,
+    ChangeStatusSerializer,
+    EditResponsiblesSerializer,
+    EditContributersSerializer,
     TicketDetailsSerializer,
     LikeSerializer,
     PrivateAttachmentSerializer,

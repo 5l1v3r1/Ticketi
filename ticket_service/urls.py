@@ -10,6 +10,9 @@ from .views import (
     ProfilePicUploadView,
     PublicProfileView,
     PrivateTicketView,
+    CommentDetailsView,
+    CommentJudgmentView,
+    DislikeView,
 )
 
 #TODO: set permissions!
