@@ -1,10 +1,29 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
-from models import Referral, SetConfirmationLimit, EditTicket, ChangeStatus, Reopen
+from models import (
+    Ticket,
+    Type,
+    Tag,
+    Comment,
+    BaseActivity,
+    Like,
+    PrivateAttachment,
+    PublicAttachment,
+    BaseAttachment,
+)
+from models import (
+    Referral,
+    SetConfirmationLimit,
+    EditTicket,
+    ChangeStatus,
+    Reopen,
+    ProfilePic,
+    Profile,
+    PrivateTicket,
+)
 from django.contrib.auth.models import User
 import datetime
 from django.db.models import Q
-
+import json
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,10 +36,58 @@ class TypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'title')
 
 class UserSerializer(serializers.ModelSerializer):
-    picture_path = serializers.ReadOnlyField(source='profile.picture_path')
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'picture_path')
+        fields = ('id', 'username', 'first_name', 'last_name', )
+
+class ProfilePicUploadSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    pic = json.dumps(unicode('pic'))
+    class Meta:
+        model = ProfilePic
+        fields = ('pic', 'user', )
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    picture_path = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = ('user', 'post', 'picture_path', )
+
+    def get_picture_path(self, profile):
+        queryset = ProfilePic.objects.filter(Q(user=profile.user))
+        serializer = ProfilePicUploadSerializer(instance=queryset, many=True)
+        return serializer.data
+
+# class PersonalProfileSerializer(serializers.ModelSerializer):
+#     user = UserSerializer(read_only=True)
+#     picture_path = serializers.SerializerMethodField()
+
+class BaseAttachmentSerializer(serializers.ModelSerializer):
+    pic = json.dumps(unicode('pic'))
+    class Meta:
+        model = BaseAttachment
+        fields = ('pic', 'description', )
+
+class PublicAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PublicAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PrivateAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateTicketSerializer(serializers.ModelSerializer):
+    addressed_users = UserSerializer(many=True)
+    # parent_ticket = TicketSerializer(read_only=True)
+    private_attachment = PrivateAttachmentSerializer(many=True)
+
+    class Meta:
+        model = PrivateTicket
+        fields = ('body', 'addressed_users', 'parent_ticket', 'private_attachment')
 
 class TicketSerializer(serializers.ModelSerializer):
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
@@ -31,6 +98,8 @@ class TicketSerializer(serializers.ModelSerializer):
     addressed_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     cc_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     tag_list = TagSerializer(many=True)
+    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments")
+    private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket')
 
     class Meta:
         model = Ticket
@@ -56,6 +125,8 @@ class TicketSerializer(serializers.ModelSerializer):
             'need_to_confirmed', # read_only
             'minimum_approvers_count', # read_only
             'parent',
+            'public_attachments',
+            'private_ticket',
         )
         read_only_fields = ('creation_time', 'contributers', 'status', 'need_to_confirmed', 'minimum_approvers_count')
         extra_kwargs = {
@@ -79,6 +150,8 @@ class TicketSerializer(serializers.ModelSerializer):
         )
         ticket.save()
 
+        # ticket.public_attachments.add(PublicAttachmentSerializer.save(parent_ticket=ticket))
+
         # TODO: khode user ro az list 'in_list_contributers' o 'addressed_users' o 'cc_users' ina hazf konim!
         ticket.contributers.add(self.context['request'].user)
         map(lambda user: ticket.addressed_users.add(user), validated_data['addressed_users'])
@@ -93,11 +166,11 @@ class TicketSerializer(serializers.ModelSerializer):
 
         return ticket
 
-class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exist in that 'ticket'
+class CommentSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_count') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0
     user = UserSerializer(read_only=True)
     class Meta:                                       #TODO: ejazeye delete ba permission dade beshe
-        model = Comment
+        model = Comment                              #TODO: verify 'parent' exist in that 'ticket'
         fields = (
             'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums',
         )
@@ -114,8 +187,6 @@ class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exi
         )
         comment.save()
         return comment
-
-
 
 ################################# Activities ###################################
 class BaseActivitySerializer(serializers.ModelSerializer):
@@ -150,7 +221,6 @@ class ReopenSerializer(BaseActivitySerializer):
         fields = BaseActivitySerializer.Meta.fields + ('new_ticket',)
 ################################################################################
 
-
 class TicketDetailsSerializer(serializers.ModelSerializer):
     known_approvers = UserSerializer(many=True, read_only=True)
     known_denials = UserSerializer(many=True, read_only=True)
@@ -165,6 +235,8 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
     contributers = serializers.SerializerMethodField('get_contributers2')   #TODO: edit name
     in_list_contributers = serializers.SerializerMethodField('get_in_list_contributers2')   #TODO: edit name
     activities = serializers.SerializerMethodField('get_activities2')   #TODO: edit name
+    # private_ticket = PrivateTicketSerializer(many=True, source='privateticket.get_private_ticket')
+    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments")
 
     def get_activities2(self, ticket):
         referral = ReferralSerializer(instance=Referral.objects.filter(Q(ticket=ticket)), many=True)
@@ -240,9 +312,10 @@ class TicketDetailsSerializer(serializers.ModelSerializer):
             'parent',
             'activities',
             'comments',
+            'public_attachments',
         )
 
-class LikeSerializer(serializers.ModelSerializer): #TODO: dislike ham beshe.
+class LikeSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class  Meta:
         model = Like
@@ -258,19 +331,3 @@ class LikeSerializer(serializers.ModelSerializer): #TODO: dislike ham beshe.
         )
         like.save()
         return like
-
-
-class BaseAttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = BaseActivity
-        fields = ('path', )
-
-class PublicAttachmentSerializer(BaseAttachmentSerializer):
-    class Meta(BaseAttachmentSerializer.Meta):
-        model = PublicAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
-
-class PrivateAttachmentSerializer(BaseAttachmentSerializer):
-    class Meta(BaseAttachmentSerializer.Meta):
-        model = PrivateAttachment
-        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
