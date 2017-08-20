@@ -1,26 +1,33 @@
 # -*- coding: utf-8 -*-
 
 from rest_framework import generics
-from .models import Ticket, Comment, Like, PrivateAttachment, PublicAttachment, SetConfirmationLimitActiviy, EditTicketActivity, ReopenActivity
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly,
+    IsAuthenticated,
+)
+from .serializer import (
+    TicketSerializer,
+    CommentSerializer,
+    TicketDetailsSerializer,
+    LikeSerializer,
+    PrivateAttachmentSerializer,
+    PublicAttachmentSerializer,
+    ProfilePicUploadSerializer,
+    PublicProfileSerializer,
+    PrivateTicketSerializer,
+)
+from .models import (
+    Ticket,
+    Comment,
+    Like,
+    PrivateAttachment,
+    PublicAttachment,
+    Profile,
+    ProfilePic,
+    PrivateTicket,
+)
 from rest_framework.pagination import PageNumberPagination
-from permissions import IsOwnerOrReadOnly, IsInListContributers
-from django.db.models import Q
-
-from .serializer import TicketSerializer, \
-                        CommentSerializer, \
-                        CommentDetailsSerializer, \
-                        CommentJudgmentSerializer, \
-                        TicketDetailsSerializer, \
-                        PrivateAttachmentSerializer, \
-                        PublicAttachmentSerializer, \
-                        ContributeSerializer, \
-                        LikeSerializer, \
-                        VoteSerializer, \
-                        SetNeedToConfirmedSerializer, \
-                        ChangeStatusSerializer, \
-                        EditResponsiblesSerializer, \
-                        EditContributersSerializer
-
+from permissions import IsOwnerOrReadOnly
 from rest_framework.views import APIView
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -48,7 +55,6 @@ class TicketDetailsView(generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = 'ticket_id'
     queryset = Ticket.objects.all()
     serializer_class = TicketDetailsSerializer
-    # permission_classes = [IsOwnerOrReadOnly]
 
     def perform_update(self, serializer):
         ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
@@ -117,13 +123,33 @@ class DislikeView(generics.DestroyAPIView):
         user = self.request.user
         return Like.objects.filter(Q(comment_id=comment_id) & Q(user=user))
 
-class PrivateAttachmentView(generics.ListCreateAPIView):
+class PrivateAttachmentView(generics.ListCreateAPIView): #TODO: niazi nist
     queryset = PrivateAttachment.objects.all()
     serializer_class = PrivateAttachmentSerializer
 
-class PublicAttachmentsView(generics.ListCreateAPIView):
+class PublicAttachmentsView(generics.ListCreateAPIView): #TODO: b in niazi nist
     queryset = PublicAttachment.objects.all()
     serializer_class = PublicAttachmentSerializer
+
+class PrivateAttachmentsView(generics.ListCreateAPIView): #TODO: b in ham niazi nist
+    queryset = PrivateAttachment.objects.all()
+    serializer_class = PrivateAttachmentSerializer
+
+class ProfilePicUploadView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProfilePic.objects.all()
+    serializer_class = ProfilePicUploadSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class PublicProfileView(generics.ListAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = PublicProfileSerializer
+
+class PrivateTicketView(generics.ListCreateAPIView): #TODO: be in aslan niazi nist, vase teste. (chon listo support nemikone -_-)
+    queryset = PrivateTicket.objects.all()
+    serializer_class = PrivateTicketSerializer
 
 class ContributeView(generics.CreateAPIView):
     lookup_field = 'id'

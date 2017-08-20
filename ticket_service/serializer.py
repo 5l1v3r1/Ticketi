@@ -1,11 +1,29 @@
 from rest_framework import serializers
-from models import Ticket, Type, Tag, Comment, BaseActivity, Like, PrivateAttachment, PublicAttachment
-from models import ReferralActiviy, SetConfirmationLimitActiviy, EditTicketActivity, ChangeStatusActivity, ReopenActivity
-from rest_framework.validators import UniqueTogetherValidator
+from models import (
+    Ticket,
+    Type,
+    Tag,
+    Comment,
+    BaseActivity,
+    Like,
+    PrivateAttachment,
+    PublicAttachment,
+    BaseAttachment,
+)
+from models import (
+    Referral,
+    SetConfirmationLimit,
+    EditTicket,
+    ChangeStatus,
+    Reopen,
+    ProfilePic,
+    Profile,
+    PrivateTicket,
+)
 from django.contrib.auth.models import User
 import datetime
 from django.db.models import Q
-
+import json
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,10 +36,58 @@ class TypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'title')
 
 class UserSerializer(serializers.ModelSerializer):
-    picture_path = serializers.ReadOnlyField(source='profile.picture_path')
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'picture_path')
+        fields = ('id', 'username', 'first_name', 'last_name', )
+
+class ProfilePicUploadSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    pic = json.dumps(unicode('pic'))
+    class Meta:
+        model = ProfilePic
+        fields = ('pic', 'user', )
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    picture_path = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = ('user', 'post', 'picture_path', )
+
+    def get_picture_path(self, profile):
+        queryset = ProfilePic.objects.filter(Q(user=profile.user))
+        serializer = ProfilePicUploadSerializer(instance=queryset, many=True)
+        return serializer.data
+
+# class PersonalProfileSerializer(serializers.ModelSerializer):
+#     user = UserSerializer(read_only=True)
+#     picture_path = serializers.SerializerMethodField()
+
+class BaseAttachmentSerializer(serializers.ModelSerializer):
+    pic = json.dumps(unicode('pic'))
+    class Meta:
+        model = BaseAttachment
+        fields = ('pic', 'description', )
+
+class PublicAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PublicAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateAttachmentSerializer(BaseAttachmentSerializer):
+    class Meta(BaseAttachmentSerializer.Meta):
+        model = PrivateAttachment
+        fields = BaseAttachmentSerializer.Meta.fields + ('ticket', )
+
+class PrivateTicketSerializer(serializers.ModelSerializer):
+    addressed_users = UserSerializer(many=True)
+    # parent_ticket = TicketSerializer(read_only=True)
+    private_attachment = PrivateAttachmentSerializer(many=True)
+
+    class Meta:
+        model = PrivateTicket
+        fields = ('body', 'addressed_users', 'parent_ticket', 'private_attachment')
 
 class TicketSerializer(serializers.ModelSerializer):
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
@@ -32,6 +98,8 @@ class TicketSerializer(serializers.ModelSerializer):
     addressed_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     cc_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     tag_list = TagSerializer(many=True)
+    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments")
+    private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket')
 
     class Meta:
         model = Ticket
@@ -57,6 +125,8 @@ class TicketSerializer(serializers.ModelSerializer):
             'need_to_confirmed', # read_only
             'minimum_approvers_count', # read_only
             'parent',
+            'public_attachments',
+            'private_ticket',
         )
         read_only_fields = ('creation_time', 'contributers', 'status', 'need_to_confirmed', 'minimum_approvers_count')
         extra_kwargs = {
@@ -79,6 +149,8 @@ class TicketSerializer(serializers.ModelSerializer):
             parent = validated_data['parent'],
         )
         ticket.save()
+
+        # ticket.public_attachments.add(PublicAttachmentSerializer.save(parent_ticket=ticket))
 
         # TODO: khode user ro az list 'in_list_contributers' o 'addressed_users' o 'cc_users' ina hazf konim!
         ticket.contributers.add(self.context['request'].user)
@@ -314,6 +386,7 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'parent',
             'activities',
             'comments',
+            'public_attachments',
         )
         read_only_fields = (
             'id',
