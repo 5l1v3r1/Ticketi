@@ -60,6 +60,17 @@ class PublicProfileSerializer(serializers.ModelSerializer):
         serializer = ProfilePicUploadSerializer(instance=queryset, many=True)
         return serializer.data
 
+# class PrivateProfileSerializer(serializers.ModelSerializer):
+#     user = UserSerializer(read_only=True)
+#     profile_pic = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = Profile
+#         fields = ('user', 'post', 'profile_pic', )
+#
+#     def get_profile_pic(self, profile):
+#         queryset = ProfilePicUploadSerializer
+
 # class PersonalProfileSerializer(serializers.ModelSerializer):
 #     user = UserSerializer(read_only=True)
 #     picture_path = serializers.SerializerMethodField()
@@ -181,7 +192,7 @@ class CommentSerializer(serializers.ModelSerializer): #TODO: verify 'parent' exi
     #     else:
     #         return ''
 
-    class Meta:                                       #DONE: ejazeye delete ba permission dade beshe
+    class Meta:
         model = Comment
         fields = (
             'parent', 'ticket', 'body', 'id', 'user', 'creation_time', 'being_unknown', 'verified', 'likes_nums', 'edited',
@@ -293,7 +304,6 @@ class ReopenActivitySerializer(BaseActivitySerializer):
         fields = BaseActivitySerializer.Meta.fields + ('new_ticket',)
 ################################################################################
 
-
 class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi ham bayad ezafe beshe vase inke masalan ray ma chi bode o ina!
     known_approvers = UserSerializer(many=True, read_only=True)
     known_denials = UserSerializer(many=True, read_only=True)
@@ -322,7 +332,6 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'changeStatus': changeStatus.data,
             'reopen': reopen.data
         }
-
 
     def get_comments(self, ticket):
         queryset = []

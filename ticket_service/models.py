@@ -162,10 +162,10 @@ class BaseAttachment (models.Model):
         )
         self.save()
 
-class PublicAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
+class PublicAttachment (BaseAttachment):
     ticket = models.ForeignKey('Ticket')
 
-class PrivateAttachment (BaseAttachment): #DONE: esm az halate jam kharej beshe
+class PrivateAttachment (BaseAttachment):
     ticket = models.ForeignKey('PrivateTicket')
 
 class Comment (models.Model):
@@ -210,7 +210,7 @@ class SetConfirmationLimitActiviy (BaseActivity):
     limit_value = models.IntegerField(default = 0)
     need_to_confirmed = models.BooleanField(default = False)
 
-class EditTicketActivity (BaseActivity): #TODO: vaghti edit mikone, noskhe ghabli ro negah dare, injoori hame ro darim!
+class EditTicketActivity (BaseActivity):
     prev_title = models.CharField(max_length=500)
     prev_body = models.TextField()
 
