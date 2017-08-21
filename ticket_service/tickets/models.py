@@ -84,9 +84,9 @@ class Ticket (models.Model):
         return self.title
 
 class PrivateTicket (models.Model):
+    parent_ticket = models.ForeignKey('Ticket')
     body = models.TextField()
     addressed_users = models.ManyToManyField(User)
-    parent_ticket = models.ForeignKey('Ticket')
 
     @property
     def get_private_attachments(self):

@@ -13,7 +13,10 @@ from ticket_service.users.serializers import (
     UserSerializer,
 )
 
-from .attachments.serializers import *
+from .attachments.serializers import (
+    PrivateAttachmentSerializer,
+    PublicAttachmentSerializer,
+)
 import datetime
 
 from .activities.serializers import (
@@ -51,13 +54,50 @@ class TypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'title')
 
 class PrivateTicketSerializer(serializers.ModelSerializer):
+    addressed_users = UserSerializer(many=True, read_only=True)
+    parent_ticket = serializers.IntegerField(write_only=True)
+    private_attachment = PrivateAttachmentSerializer(many=True, source='get_private_attachments', read_only=True)
+    class Meta:
+        model = PrivateTicket
+        fields = (
+            'id',
+            'parent_ticket',
+            'body',
+            'addressed_users',
+            'private_attachment',
+        )
+        read_only_fields = (
+            'body',
+        )
+
+    def create(self, validated_data):
+        ticket = Ticket.objects.get(id=validated_data['parent_ticket'])
+        pt = PrivateTicket(
+            parent_ticket = ticket,
+            body = ''
+        )
+        pt.save()
+        return pt
+
+class PrivateTickettDetailsSerializer(serializers.ModelSerializer):
     addressed_users = UserSerializer(many=True)
-    # parent_ticket = TicketSerializer(read_only=True)
+    # parent_ticket = serializers.IntegerField(write_only=True)
     private_attachment = PrivateAttachmentSerializer(many=True, source='get_private_attachments')
 
     class Meta:
         model = PrivateTicket
-        fields = ('body', 'addressed_users', 'private_attachment')
+        fields = (
+            # 'parent_ticket',
+            'body',
+            'addressed_users',
+            'private_attachment',
+        )
+
+    def update(self, instance, validated_data):
+        instance.body = validated_data['body']
+        for addressed_user in validated_data['addressed_users']:
+            instance.addressed_users.add(addressed_user)
+        return instance
 
 class DraftTicketSerializer(serializers.ModelSerializer):
     class Meta:
@@ -81,15 +121,8 @@ class DraftTicketSerializer(serializers.ModelSerializer):
         return ticket
 
 class DraftTicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi ham bayad ezafe beshe vase inke masalan ray ma chi bode o ina!
-    # ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
-    # addressed_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
-    # cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
-    # tag_list = TagSerializer(many=True, read_only=True)
-
-    # comments = serializers.SerializerMethodField() #DONE: edit name
     contributers = serializers.SerializerMethodField()   #DONE: edit name
     in_list_contributers = serializers.SerializerMethodField()   #DONE: edit name
-    # activities = serializers.SerializerMethodField()   #DONE: edit name
     public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments", read_only=True)
     private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket', read_only=True)
 
@@ -168,8 +201,6 @@ class TicketSerializer(serializers.ModelSerializer):
     addressed_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     cc_users = UserSerializer(many=True) #TODO: test konim ke in kar mikone asan ya na!
     tag_list = TagSerializer(many=True)
-    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments")
-    private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket')
 
     class Meta:
         model = Ticket
@@ -195,9 +226,6 @@ class TicketSerializer(serializers.ModelSerializer):
             'need_to_confirmed', # read_only
             'minimum_approvers_count', # read_only
             'parent',
-            'public_attachments',
-            'private_ticket',
-            'is_draft' #TODO: remove for production
         )
         read_only_fields = ('creation_time', 'contributers', 'status', 'need_to_confirmed', 'minimum_approvers_count')
         extra_kwargs = {
@@ -246,6 +274,8 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
     addressed_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
     tag_list = TagSerializer(many=True, read_only=True)
+    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments")
+    private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket')
 
     comments = serializers.SerializerMethodField() #DONE: edit name
     contributers = serializers.SerializerMethodField()   #DONE: edit name
@@ -325,8 +355,9 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'parent',
             'activities',
             'comments',
-            'is_draft'
-            # 'public_attachments',
+            'is_draft',
+            'public_attachments',
+            'private_ticket',
         )
         read_only_fields = (
             'id',
@@ -430,6 +461,29 @@ class EditResponsiblesSerializer(serializers.ModelSerializer):
             ticket.cc_users.remove(user)
 
         return ticket
+
+class EditResponsiblesPrivateSerializer(serializers.ModelSerializer):
+    REQUEST_TYPE_CHOICES = (
+        (0, 'add'),
+        (1, 'delete')
+    )
+    username = serializers.CharField(write_only=True)
+    request_type = serializers.ChoiceField(choices=REQUEST_TYPE_CHOICES, write_only=True)
+    class Meta:
+        model = Ticket
+        fields = ('username', 'request_type', )
+
+    def create(self, validated_data):
+        private_ticket = validated_data['private_ticket']
+        print 'ok ta inja -------->'
+        user = User.objects.get(username=validated_data['username'])
+
+        if validated_data['request_type'] == 0: # add
+            private_ticket.addressed_users.add(user)
+        else:   # remove
+            private_ticket.addressed_users.remove(user)
+
+        return private_ticket
 
 class EditContributersSerializer(serializers.ModelSerializer):
     REQUEST_TYPE_CHOICES = (

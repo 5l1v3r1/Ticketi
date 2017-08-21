@@ -25,9 +25,12 @@ from .serializers import (
     ChangeStatusSerializer,
     EditContributersSerializer,
     EditResponsiblesSerializer,
+    EditResponsiblesPrivateSerializer,
     DraftTicketSerializer,
     DraftTicketDetailsSerializer,
     PublishDestroyTicketSerializer,
+    PrivateTicketSerializer,
+    PrivateTickettDetailsSerializer
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -66,7 +69,6 @@ class PublishDestroyTicketView(generics.RetrieveUpdateDestroyAPIView):
         ticket.is_draft = False
         serializer.save(ticket=ticket)
 
-
 class TicketView(generics.ListCreateAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
@@ -101,6 +103,12 @@ class TicketDetailsView(generics.RetrieveUpdateAPIView):
 class PrivateTicketView(generics.ListCreateAPIView): #TODO: be in aslan niazi nist, vase teste. (chon listo support nemikone -_-)
     queryset = PrivateTicket.objects.all()
     serializer_class = PrivateTicketSerializer
+
+class PrivateTickettDetailsSerializer(generics.RetrieveUpdateDestroyAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'private_ticket_id'
+    queryset = PrivateTicket.objects.all()
+    serializer_class = PrivateTickettDetailsSerializer
 
 class ContributeView(generics.CreateAPIView):
     lookup_field = 'id'
@@ -188,6 +196,17 @@ class EditResponsiblesView(generics.CreateAPIView):
     def perform_create(self, serializer):
         ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
         serializer.save(ticket=ticket)
+
+class EditResponsiblesPrivateView(generics.CreateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'private_ticket_id'
+
+    queryset = PrivateTicket.objects.all()
+    serializer_class = EditResponsiblesPrivateSerializer
+
+    def perform_create(self, serializer):
+        private_ticket = PrivateTicket.objects.get(id=self.kwargs['private_ticket_id'])
+        serializer.save(private_ticket=private_ticket)
 
 class EditContributersView(generics.CreateAPIView):
     lookup_field = 'id'
