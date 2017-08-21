@@ -3,6 +3,10 @@ from .models import (
     Comment,
     Like,
 )
+import datetime
+from ticket_service.users.serializers import (
+    UserSerializer,
+)
 
 class CommentSerializer(serializers.ModelSerializer):
     likes_nums = serializers.ReadOnlyField(source = 'likes_num') #TODO: (sadegh) man _count gozashtim, ye shekl konim, ya hame _num ya hame _count id:0

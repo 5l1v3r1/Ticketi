@@ -14,6 +14,7 @@ from ticket_service.users.serializers import (
 )
 
 from .attachments.serializers import *
+import datetime
 
 from .activities.serializers import (
     ReferralActivitySerializer,
@@ -52,11 +53,11 @@ class TypeSerializer(serializers.ModelSerializer):
 class PrivateTicketSerializer(serializers.ModelSerializer):
     addressed_users = UserSerializer(many=True)
     # parent_ticket = TicketSerializer(read_only=True)
-    private_attachment = PrivateAttachmentSerializer(many=True)
+    private_attachment = PrivateAttachmentSerializer(many=True, source='get_private_attachments')
 
     class Meta:
         model = PrivateTicket
-        fields = ('body', 'addressed_users', 'parent_ticket', 'private_attachment')
+        fields = ('body', 'addressed_users', 'private_attachment')
 
 class DraftTicketSerializer(serializers.ModelSerializer):
     class Meta:

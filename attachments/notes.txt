@@ -1,0 +1,15 @@
+1- Read about "forms"
+2- Lookup field kwards
+3- SAFE_METHODS and my_safe_methods
+4- Use of super() in query_set
+5- search_fields and filter_backends in a view
+6- Pagination classes
+7- Get absolute url
+8- Hyperlinks
+
+
+
+
+
+
+https://www.youtube.com/watch?v=dfIB-LthIpE&list=PLEsfXFp6DpzTOcOVdZF-th7BS_GYGguAS&index=9

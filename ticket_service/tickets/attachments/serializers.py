@@ -7,10 +7,10 @@ from .models import (
 )
 
 class BaseAttachmentSerializer(serializers.ModelSerializer):
-    pic = json.dumps(unicode('pic'))
+    attached_file = json.dumps(unicode('attached_file'))
     class Meta:
         model = BaseAttachment
-        fields = ('pic', 'description', )
+        fields = ('attached_file', 'description', )
 
 class PublicAttachmentSerializer(BaseAttachmentSerializer):
     class Meta(BaseAttachmentSerializer.Meta):
