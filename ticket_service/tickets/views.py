@@ -1,9 +1,18 @@
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import generics
+import datetime
 
 from .models import (
     Ticket,
     PrivateTicket,
+)
+
+from .activities.serializers import (
+    SetConfirmationLimitActivitySerializer
+)
+
+from .activities.models import (
+    SetConfirmationLimitActiviy
 )
 
 from .serializers import (
@@ -16,13 +25,47 @@ from .serializers import (
     ChangeStatusSerializer,
     EditContributersSerializer,
     EditResponsiblesSerializer,
-    
+    DraftTicketSerializer,
+    DraftTicketDetailsSerializer,
+    PublishDestroyTicketSerializer,
 )
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 10
+
+class DraftTicketView(generics.ListCreateAPIView):
+    queryset = Ticket.objects.filter(is_draft=True)
+    serializer_class = DraftTicketSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+class DraftTicketDetailsView(generics.RetrieveUpdateAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+
+    queryset = Ticket.objects.filter(is_draft=True)
+    serializer_class = DraftTicketDetailsSerializer
+
+    # def get_queryset(self):
+    #     comment_id = self.kwargs['comment_id']
+    #     user = self.request.user
+    #     return Like.objects.filter(Q(comment_id=comment_id) & Q(user=user))
+
+class PublishDestroyTicketView(generics.RetrieveUpdateDestroyAPIView):
+    lookup_field = 'id'
+    lookup_url_kwarg = 'ticket_id'
+    queryset = Ticket.objects.filter(is_draft=True)
+    serializer_class = PublishDestroyTicketSerializer
+
+    def perform_create(self, serializer):
+        ticket = Ticket.objects.get(id=self.kwargs['ticket_id'])
+        ticket.creation_time = datetime.datetime.now()
+        ticket.is_draft = False
+        serializer.save(ticket=ticket)
+
 
 class TicketView(generics.ListCreateAPIView):
     queryset = Ticket.objects.all()
@@ -88,8 +131,8 @@ class SetNeedToConfirmedView(generics.RetrieveUpdateAPIView):
         SetConfirmationLimitActiviy(
             user = self.request.user,
             ticket = Ticket.objects.get(id=self.kwargs['ticket_id']),
-            need_to_confirmed = serializer.data['need_to_confirmed'],
-            limit_value = serializer.data['minimum_approvers_count']
+            need_to_confirmed = serializer.validated_data['need_to_confirmed'],
+            limit_value = serializer.validated_data['minimum_approvers_count']
         ).save()
         serializer.save()
 

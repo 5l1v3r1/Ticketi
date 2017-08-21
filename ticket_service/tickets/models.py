@@ -22,7 +22,7 @@ class Ticket (models.Model):
     unknown_approvers = models.ManyToManyField(User, related_name='ticket_M2M_unknown_approvers', blank=True)
     known_denials = models.ManyToManyField(User, related_name='ticket_M2M_known_denials', blank=True)
     unknown_denials = models.ManyToManyField(User, related_name='ticket_M2M_unknown_denials', blank=True)
-    addressed_users = models.ManyToManyField(User, related_name='addressed_users') #TODO: mitone khali bashe?
+    addressed_users = models.ManyToManyField(User, related_name='addressed_users', blank=True) #TODO: mitone khali bashe? #TODO: remove (blank=True) for production + baraye edit draft bayad beshe faghat
     cc_users = models.ManyToManyField(User, related_name='ticket_M2M_cc_users', blank=True)
 
     contributers = models.ManyToManyField(User, related_name='ticket_M2M_contributers')
@@ -32,6 +32,7 @@ class Ticket (models.Model):
     being_unknown = models.BooleanField(default=False)
     tag_list = models.ManyToManyField('Tag', blank=True)
     creation_time = models.DateField(auto_now_add=True) #TODO: ezafe kardane saAt
+    is_draft = models.BooleanField(default=True)
 
     OPEN = 'OPEN'
     WAITING = 'WAITING'

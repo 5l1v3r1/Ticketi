@@ -1,7 +1,17 @@
+from rest_framework import serializers
+from ticket_service.users.serializers import UserSerializer
+from .models import (
+    BaseActivity,
+    ReferralActiviy,
+    SetConfirmationLimitActiviy,
+    EditTicketActivity,
+    ChangeStatusActivity,
+    ReopenActivity,
+)
 class BaseActivitySerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
-        model = ReferralActiviy
+        model = BaseActivity
         fields = ('id', 'user', 'time',)
 
 class ReferralActivitySerializer(serializers.ModelSerializer):

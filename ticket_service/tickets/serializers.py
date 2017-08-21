@@ -1,4 +1,7 @@
 from rest_framework import serializers
+import datetime
+from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import (
     Tag,
     Type,
@@ -9,8 +12,32 @@ from .models import (
 from ticket_service.users.serializers import (
     UserSerializer,
 )
+
 from .attachments.serializers import *
 
+from .activities.serializers import (
+    ReferralActivitySerializer,
+    SetConfirmationLimitActivitySerializer,
+    EditTicketActivitySerializer,
+    ChangeStatusActivitySerializer,
+    ReopenActivitySerializer
+)
+
+from .activities.models import (
+    ReferralActiviy,
+    SetConfirmationLimitActiviy,
+    EditTicketActivity,
+    ChangeStatusActivity,
+    ReopenActivity
+)
+
+from .comments.models import (
+    Comment
+)
+
+from .comments.serializers import (
+    CommentSerializer
+)
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,6 +57,106 @@ class PrivateTicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrivateTicket
         fields = ('body', 'addressed_users', 'parent_ticket', 'private_attachment')
+
+class DraftTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ('id',)
+
+    def create(self, validated_data):
+        ticket = Ticket(
+            title = '',
+            body = '',
+            summary_len = 0,
+            # ticket_type = ,
+            priority = Ticket.LOW,
+            being_unknown = False,
+            creation_time = datetime.datetime.now(),
+            status = Ticket.OPEN,
+            is_public = True,
+            parent = None,
+        )
+        ticket.save()
+        return ticket
+
+class DraftTicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi ham bayad ezafe beshe vase inke masalan ray ma chi bode o ina!
+    # ticket_type = TypeSerializer(read_only=True) #TODO: baraye write bayad avaz beshe
+    # addressed_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
+    # cc_users = UserSerializer(many=True, read_only=True) #TODO: test konim ke in kar mikone asan ya na!
+    # tag_list = TagSerializer(many=True, read_only=True)
+
+    # comments = serializers.SerializerMethodField() #DONE: edit name
+    contributers = serializers.SerializerMethodField()   #DONE: edit name
+    in_list_contributers = serializers.SerializerMethodField()   #DONE: edit name
+    # activities = serializers.SerializerMethodField()   #DONE: edit name
+    public_attachments = PublicAttachmentSerializer(many=True, source="get_public_attachments", read_only=True)
+    private_ticket = PrivateTicketSerializer(many=True, source='get_private_ticket', read_only=True)
+
+    def get_contributers(self, ticket):
+        queryset = []
+        requested_user = self.context['request'].user
+        if not ticket.being_unknown or \
+        requested_user in ticket.contributers.all() or \
+        requested_user in ticket.in_list_contributers.all():
+            queryset = ticket.contributers.all()
+
+        serializer = UserSerializer(instance=queryset, many=True)
+        return serializer.data
+
+    def get_in_list_contributers(self, ticket):
+        queryset = []
+        requested_user = self.context['request'].user
+        if requested_user in ticket.contributers.all() or \
+        requested_user in ticket.in_list_contributers.all():
+            queryset = ticket.in_list_contributers.all()
+
+        serializer = UserSerializer(instance=queryset, many=True)
+        return serializer.data
+
+    class Meta:
+        model = Ticket
+        fields = (
+            'id',
+            'title',
+            'body',
+            'summary_len',
+            'ticket_type',
+            'priority',
+            # 'known_approvers',
+            # 'known_denials',
+            # 'approvers_count',
+            # 'denials_count',
+            'addressed_users',
+            'cc_users',
+            'contributers',
+            'in_list_contributers',
+            'is_public',
+            'being_unknown',
+            'tag_list',
+            'creation_time',
+            # 'status',
+            # 'need_to_confirmed',
+            # 'minimum_approvers_count',
+            'parent',
+            # 'activities',
+            # 'comments',
+            'public_attachments',
+            'private_ticket',
+        )
+        read_only_fields = (
+            'public_attachments',
+            'private_ticket',
+        )
+
+class PublishDestroyTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ('id', )
+
+    def create(self, validated_data):
+        ticket = validated_data['ticket']
+        ticket.save()
+        return ticket
 
 class TicketSerializer(serializers.ModelSerializer):
     contributers = UserSerializer(many=True, read_only=True, source='get_contributers')
@@ -69,6 +196,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'parent',
             'public_attachments',
             'private_ticket',
+            'is_draft' #TODO: remove for production
         )
         read_only_fields = ('creation_time', 'contributers', 'status', 'need_to_confirmed', 'minimum_approvers_count')
         extra_kwargs = {
@@ -196,7 +324,8 @@ class TicketDetailsSerializer(serializers.ModelSerializer): #TODO: ye field hayi
             'parent',
             'activities',
             'comments',
-            'public_attachments',
+            'is_draft'
+            # 'public_attachments',
         )
         read_only_fields = (
             'id',
