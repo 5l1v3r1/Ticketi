@@ -86,7 +86,7 @@ class TicketSerializer(serializers.ModelSerializer):
             priority = validated_data['priority'],
             being_unknown = validated_data['being_unknown'],
             creation_time = datetime.datetime.now(),
-            status = Ticket.PENDING,
+            status = Ticket.OPEN,
             is_public = validated_data['is_public'],
             parent = validated_data['parent'],
         )
